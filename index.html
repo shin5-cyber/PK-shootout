@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PK戦ゲーム - A vs B</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #2ecc71; /* サッカーピッチ風の緑 */
+            background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            overflow-x: hidden;
+            touch-action: manipulation; /* ダブルタップズーム防止 */
+        }
+
+        /* カスタムアニメーション */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* 派手な演出用アニメーション */
+        @keyframes sunburst-spin {
+            0% { transform: rotate(0deg) scale(2); }
+            100% { transform: rotate(360deg) scale(2); }
+        }
+
+        @keyframes text-zoom-in-bounce {
+            0% { opacity: 0; transform: scale(0.1) rotate(-15deg); }
+            50% { opacity: 1; transform: scale(1.5) rotate(-5deg); }
+            70% { transform: scale(0.9) rotate(-10deg); }
+            100% { transform: scale(1) rotate(-12deg); }
+        }
+
+        @keyframes text-impact {
+            0% { opacity: 0; transform: scale(3) rotate(10deg); filter: blur(10px); }
+            20% { opacity: 1; transform: scale(1) rotate(12deg); filter: blur(0); }
+            30% { transform: scale(1.1) rotate(12deg); }
+            100% { transform: scale(1) rotate(12deg); }
+        }
+        
+        /* 紙吹雪アニメーション */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .animate-pop { animation: pop 0.3s ease-in-out; }
+
+        .flash-text {
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0px 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        /* ゴール演出用スタイル */
+        .effect-goal-bg {
+            background: repeating-conic-gradient(from 0deg, #fcd34d 0deg 20deg, #fbbf24 20deg 40deg);
+            animation: sunburst-spin 8s linear infinite;
+            opacity: 0.8;
+            mix-blend-mode: overlay;
+        }
+        .effect-goal-text {
+            color: #fde047; /* Yellow-300 */
+            text-shadow: 4px 4px 0 #b45309, -2px -2px 0 #b45309, 2px -2px 0 #b45309, -2px 2px 0 #b45309, 0 0 30px #facc15, 0 0 60px #facc15;
+            animation: text-zoom-in-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* セーブ演出用スタイル */
+        .effect-save-bg {
+             background: repeating-conic-gradient(from 0deg, #ef4444 0deg 20deg, #dc2626 20deg 40deg);
+             animation: sunburst-spin 5s linear infinite reverse;
+             opacity: 0.8;
+             mix-blend-mode: multiply;
+        }
+        .effect-save-text {
+            color: #f87171; /* Red-400 */
+            text-shadow: 4px 4px 0 #7f1d1d, -2px -2px 0 #7f1d1d, 2px -2px 0 #7f1d1d, -2px 2px 0 #7f1d1d, 0 0 30px #ef4444, 0 0 60px #b91c1c;
+            animation: text-impact 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+        }
+
+        /* 勝利演出用スタイル */
+        .effect-win-text {
+            animation: text-zoom-in-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #fff;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        /* ターゲットゾーンのスタイル */
+        .target-zone {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .target-zone::after {
+            content: "○";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .target-zone.selectable:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+        .target-zone.selected::after {
+            content: "●";
+            color: #fbbf24; /* Amber-400 */
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        /* スコアボードのマルバツ */
+        .score-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #fff;
+        }
+        .score-dot.goal { border-color: #10b981; color: #10b981; }
+        .score-dot.goal::after { content: "〇"; }
+        .score-dot.miss { border-color: #ef4444; color: #ef4444; }
+        .score-dot.miss::after { content: "✕"; }
+        .score-dot.current { border-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; }
+
+        /* ゴールネット風の背景 */
+        .goal-net {
+            background-image: 
+                linear-gradient(45deg, rgba(255,255,255,0.4) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.4) 75%, rgba(255,255,255,0.4)), 
+                linear-gradient(45deg, rgba(255,255,255,0.4) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.4) 75%, rgba(255,255,255,0.4));
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col antialiased selection:bg-none">
+
+    <header class="bg-gray-900 text-white p-2 shadow-md flex justify-between items-center z-10 relative">
+        <button id="btnPromptReset" class="p-2 bg-red-700 rounded-full hover:bg-red-600 transition flex items-center justify-center gap-1 text-xs font-bold shadow-md" title="リセット">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            <span class="hidden md:inline">リセット</span>
+        </button>
+        <h1 class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 px-2">
+            激闘！ PK対決
+        </h1>
+        <button id="btnSettings" class="p-2 bg-gray-700 rounded-full hover:bg-gray-600 transition shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+    </header>
+
+    <div class="bg-white bg-opacity-90 p-2 md:p-4 m-2 rounded-xl shadow-lg flex justify-between items-center z-10 border-4 border-gray-800">
+        <div class="flex flex-col items-center flex-1">
+            <span class="text-red-600 font-bold text-lg md:text-xl">チーム A</span>
+            <span id="scoreA" class="text-4xl font-black">0</span>
+            <div id="historyA" class="flex gap-1 mt-1 flex-wrap justify-center min-h-[24px]"></div>
+        </div>
+        
+        <div class="flex flex-col items-center px-4 border-x-2 border-gray-300">
+            <div class="text-sm font-bold text-gray-500 mb-1" id="roundDisplay">ROUND 1</div>
+            <div class="text-2xl font-black bg-gray-800 text-white px-3 py-1 rounded">VS</div>
+        </div>
+
+        <div class="flex flex-col items-center flex-1">
+            <span class="text-blue-600 font-bold text-lg md:text-xl">チーム B</span>
+            <span id="scoreB" class="text-4xl font-black">0</span>
+            <div id="historyB" class="flex gap-1 mt-1 flex-wrap justify-center min-h-[24px]"></div>
+        </div>
+    </div>
+
+    <!-- ここを絶対配置のレイアウトに変更 -->
+    <main class="flex-1 relative w-full overflow-hidden" id="gameArea">
+        
+        <!-- メッセージエリア (上部に固定) -->
+        <div class="absolute top-4 left-0 w-full flex justify-center z-30 pointer-events-none">
+            <div id="messageBox" class="pointer-events-auto bg-yellow-100 border-4 border-yellow-500 text-yellow-900 p-3 rounded-xl shadow-lg text-center font-bold text-lg transition-transform duration-300 w-11/12 max-w-lg">
+                ゲーム開始！
+            </div>
+        </div>
+
+        <!-- ゴールエリア (絶対配置で固定。他の要素の影響を受けない) -->
+        <div class="absolute top-20 md:top-24 left-1/2 transform -translate-x-1/2 w-11/12 max-w-2xl h-48 md:h-64 border-t-8 border-l-8 border-r-8 border-white rounded-t-lg bg-blue-500 bg-opacity-20 goal-net shadow-2xl flex flex-col" id="goalArea">
+            <!-- ターゲットゾーン (3x2 グリッド) -->
+            <div id="targetGrid" class="flex-1 grid grid-cols-3 grid-rows-2 gap-1 p-1 h-full w-full absolute inset-0 z-10">
+                <div class="target-zone" data-pos="0"></div>
+                <div class="target-zone" data-pos="1"></div>
+                <div class="target-zone" data-pos="2"></div>
+                <div class="target-zone" data-pos="3"></div>
+                <div class="target-zone" data-pos="4"></div>
+                <div class="target-zone" data-pos="5"></div>
+            </div>
+
+            <!-- GKキャラクター (少し手前に配置して下段の○と被らないように) -->
+            <div id="goalkeeper" class="absolute -bottom-6 md:-bottom-8 left-1/2 transform -translate-x-1/2 z-20 w-20 h-20 md:w-24 md:h-24 pointer-events-none">
+                <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg" id="gkSvg">
+                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#EF4444" id="gkBody" />
+                    <circle cx="50" cy="30" r="25" fill="#FFE0BD" />
+                    <circle cx="40" cy="25" r="3" fill="#333" />
+                    <circle cx="60" cy="25" r="3" fill="#333" />
+                    <path d="M 42 40 Q 50 35 58 40" stroke="#333" stroke-width="2" fill="none" />
+                    <circle cx="25" cy="65" r="8" fill="#FFE0BD" />
+                    <circle cx="75" cy="65" r="8" fill="#FFE0BD" />
+                    <text x="50" y="75" font-size="12" fill="white" font-weight="bold" text-anchor="middle">GK</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 手前エリア (絶対配置で固定。キッカーとボール) -->
+        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl h-32 flex justify-center items-end pointer-events-none">
+            <!-- ボール -->
+            <div id="ball" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 w-10 h-10 md:w-12 md:h-12 pointer-events-none">
+                <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+                    <circle cx="50" cy="50" r="45" fill="white" stroke="#333" stroke-width="2"/>
+                    <path d="M 50 5 L 75 25 L 65 55 L 35 55 L 25 25 Z" fill="#333"/>
+                    <path d="M 75 25 L 95 40 L 85 70 L 65 55 Z" fill="#333"/>
+                    <path d="M 25 25 L 5 40 L 15 70 L 35 55 Z" fill="#333"/>
+                    <path d="M 65 55 L 85 70 L 65 95 L 50 80 Z" fill="#333"/>
+                    <path d="M 35 55 L 15 70 L 35 95 L 50 80 Z" fill="#333"/>
+                    <path d="M 50 80 L 65 95 L 35 95 Z" fill="#333"/>
+                </svg>
+            </div>
+
+            <!-- キッカーキャラクター -->
+            <div id="kicker" class="absolute bottom-2 left-1/2 ml-16 md:ml-24 transform -translate-x-1/2 z-20 w-20 h-20 md:w-24 md:h-24 pointer-events-none transition-transform duration-300">
+                 <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg" id="kickerSvg">
+                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#3B82F6" id="kickerBody" />
+                    <circle cx="50" cy="30" r="25" fill="#FFE0BD" />
+                    <circle cx="40" cy="25" r="3" fill="#333" />
+                    <circle cx="60" cy="25" r="3" fill="#333" />
+                    <path d="M 40 40 Q 50 45 60 40" stroke="#333" stroke-width="2" fill="none" />
+                    <circle cx="25" cy="65" r="8" fill="#FFE0BD" />
+                    <circle cx="75" cy="65" r="8" fill="#FFE0BD" />
+                    <text x="50" y="75" font-size="12" fill="white" font-weight="bold" text-anchor="middle">Kicker</text>
+                </svg>
+            </div>
+        </div>
+    </main>
+
+    <div class="bg-gray-800 p-4 pb-8 z-40 shadow-up border-t-4 border-gray-600 rounded-t-2xl relative">
+        <div class="flex justify-center gap-4 max-w-md mx-auto">
+            <button id="btnConfirm" class="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-4 px-6 rounded-xl text-xl shadow-[0_6px_0_#166534] active:shadow-[0_2px_0_#166534] active:translate-y-1 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                決定
+            </button>
+            <button id="btnAction" class="hidden flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-6 rounded-xl text-xl shadow-[0_6px_0_#7f1d1d] active:shadow-[0_2px_0_#7f1d1d] active:translate-y-1 transition flash-text disabled:opacity-50 disabled:cursor-not-allowed">
+                勝負！
+            </button>
+            <button id="btnReset" class="hidden flex-1 bg-blue-500 hover:bg-blue-400 text-white font-bold py-4 px-6 rounded-xl text-xl shadow-[0_6px_0_#1e3a8a] active:shadow-[0_2px_0_#1e3a8a] active:translate-y-1 transition">
+                次のラウンドへ
+            </button>
+            <button id="btnNewGame" class="hidden w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-black py-4 px-6 rounded-xl text-xl shadow-[0_6px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 transition">
+                はじめから遊ぶ
+            </button>
+        </div>
+    </div>
+
+    <!-- 演出用レイヤー (派手なエフェクト) -->
+    <div id="effectLayer" class="fixed inset-0 z-50 flex flex-col items-center justify-center opacity-0 transition-opacity duration-300 hidden overflow-hidden pointer-events-none">
+        <div id="effectBg" class="absolute inset-0"></div>
+        <div id="confettiContainer" class="absolute inset-0 overflow-hidden hidden"></div>
+        <h2 id="effectText" class="text-7xl md:text-9xl font-black italic relative z-10 text-center">
+            GOAL!!
+        </h2>
+    </div>
+
+    <!-- リセット確認モーダル -->
+    <div id="resetConfirmModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-11/12 shadow-2xl text-center">
+            <h2 class="text-xl font-bold mb-4 text-red-600">ゲームをリセットしますか？</h2>
+            <p class="text-gray-600 mb-6 font-medium">現在のスコアや履歴はすべて消去され、最初からになります。</p>
+            <div class="flex justify-center gap-4">
+                <button id="btnCancelReset" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-xl transition">キャンセル</button>
+                <button id="btnExecuteReset" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl shadow-[0_4px_0_#7f1d1d] active:shadow-[0_0px_0_#7f1d1d] active:translate-y-1 transition">リセットする</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-11/12 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-center border-b-2 pb-2">設定</h2>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-bold mb-2">対戦回数 (ラウンド数)</label>
+                <div class="flex items-center justify-between bg-gray-100 p-2 rounded-lg">
+                    <button id="btnDecRounds" class="w-10 h-10 bg-gray-300 rounded-full font-bold text-xl hover:bg-gray-400">-</button>
+                    <span id="settingRounds" class="text-2xl font-black">5</span>
+                    <button id="btnIncRounds" class="w-10 h-10 bg-gray-300 rounded-full font-bold text-xl hover:bg-gray-400">+</button>
+                </div>
+                <p class="text-sm text-gray-500 mt-2 text-center">※同点の場合は決着がつくまでサドンデスとなります。</p>
+            </div>
+
+            <div class="flex justify-center gap-4">
+                <button id="btnSaveSettings" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl shadow-md w-full">保存して閉じる</button>
+            </div>
+            <div class="mt-4 flex justify-center">
+                 <button id="btnResetData" class="text-red-500 underline text-sm">セーブデータを消去してリセット</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定数
+        const TEAM_A = 'A';
+        const TEAM_B = 'B';
+        const TEAM_A_COLOR = '#EF4444'; // Red
+        const TEAM_B_COLOR = '#3B82F6'; // Blue
+        
+        // ゴールポジション (0-5)
+        const POSITIONS = [
+            { id: 0, name: '左上', top: '15%', left: '15%' },
+            { id: 1, name: '真ん中上', top: '15%', left: '50%' },
+            { id: 2, name: '右上', top: '15%', left: '85%' },
+            { id: 3, name: '左下', top: '75%', left: '15%' },
+            { id: 4, name: '真ん中下', top: '75%', left: '50%' },
+            { id: 5, name: '右下', top: '75%', left: '85%' }
+        ];
+
+        // デフォルトのゲーム状態
+        const defaultState = {
+            maxRounds: 5,
+            currentRound: 1,
+            isSuddenDeath: false,
+            currentPhase: 'GK_SELECT', 
+            attackingTeam: TEAM_A,
+            score: { A: 0, B: 0 },
+            history: { A: [], B: [] },
+            selections: { gk: null, kicker: null }
+        };
+
+        // 状態変数
+        let gameState = JSON.parse(JSON.stringify(defaultState));
+        let selectedZone = null;
+
+        // DOM要素
+        const els = {
+            targetZones: document.querySelectorAll('.target-zone'),
+            messageBox: document.getElementById('messageBox'),
+            btnConfirm: document.getElementById('btnConfirm'),
+            btnAction: document.getElementById('btnAction'),
+            btnReset: document.getElementById('btnReset'),
+            btnNewGame: document.getElementById('btnNewGame'),
+            scoreA: document.getElementById('scoreA'),
+            scoreB: document.getElementById('scoreB'),
+            historyA: document.getElementById('historyA'),
+            historyB: document.getElementById('historyB'),
+            roundDisplay: document.getElementById('roundDisplay'),
+            gkBody: document.getElementById('gkBody'),
+            kickerBody: document.getElementById('kickerBody'),
+            gkContainer: document.getElementById('goalkeeper'),
+            gkSvg: document.getElementById('gkSvg'),
+            ball: document.getElementById('ball'),
+            kickerDiv: document.getElementById('kicker'),
+            effectLayer: document.getElementById('effectLayer'),
+            effectText: document.getElementById('effectText'),
+            effectBg: document.getElementById('effectBg'),
+            confettiContainer: document.getElementById('confettiContainer'),
+            // 設定関連
+            btnSettings: document.getElementById('btnSettings'),
+            settingsModal: document.getElementById('settingsModal'),
+            btnDecRounds: document.getElementById('btnDecRounds'),
+            btnIncRounds: document.getElementById('btnIncRounds'),
+            settingRounds: document.getElementById('settingRounds'),
+            btnSaveSettings: document.getElementById('btnSaveSettings'),
+            btnResetData: document.getElementById('btnResetData'),
+            // リセット関連
+            btnPromptReset: document.getElementById('btnPromptReset'),
+            resetConfirmModal: document.getElementById('resetConfirmModal'),
+            btnCancelReset: document.getElementById('btnCancelReset'),
+            btnExecuteReset: document.getElementById('btnExecuteReset')
+        };
+
+        function saveGame() {
+            localStorage.setItem('pkGameState', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('pkGameState');
+            if (saved) {
+                try {
+                    gameState = JSON.parse(saved);
+                    if (typeof gameState.maxRounds !== 'number') throw new Error("Invalid state");
+                } catch(e) {
+                    console.error("Save data corrupted, resetting.");
+                    gameState = JSON.parse(JSON.stringify(defaultState));
+                }
+            }
+            updateUI();
+        }
+
+        function resetGame(fullReset = false) {
+            const currentMax = gameState.maxRounds;
+            gameState = JSON.parse(JSON.stringify(defaultState));
+            if (!fullReset) {
+                gameState.maxRounds = currentMax;
+            }
+            saveGame();
+            resetVisuals();
+            updateUI();
+        }
+
+        function updateUI() {
+            els.scoreA.textContent = gameState.score.A;
+            els.scoreB.textContent = gameState.score.B;
+            
+            let roundText = `ROUND ${gameState.currentRound}`;
+            if (gameState.isSuddenDeath) roundText = `延長戦 ${gameState.currentRound}`;
+            els.roundDisplay.textContent = roundText;
+
+            renderHistory(els.historyA, gameState.history.A, gameState.attackingTeam === TEAM_A && gameState.currentPhase !== 'GAME_OVER');
+            renderHistory(els.historyB, gameState.history.B, gameState.attackingTeam === TEAM_B && gameState.currentPhase !== 'GAME_OVER');
+
+            const defTeam = gameState.attackingTeam === TEAM_A ? TEAM_B : TEAM_A;
+            els.gkBody.setAttribute('fill', defTeam === TEAM_A ? TEAM_A_COLOR : TEAM_B_COLOR);
+            els.kickerBody.setAttribute('fill', gameState.attackingTeam === TEAM_A ? TEAM_A_COLOR : TEAM_B_COLOR);
+
+            els.btnConfirm.classList.add('hidden');
+            els.btnAction.classList.add('hidden');
+            els.btnReset.classList.add('hidden');
+            els.btnNewGame.classList.add('hidden');
+            
+            els.targetZones.forEach(z => {
+                z.classList.remove('selectable', 'selected');
+            });
+            selectedZone = null;
+            els.btnConfirm.disabled = true;
+
+            const atkTeamName = `チーム${gameState.attackingTeam}`;
+            const defTeamName = `チーム${defTeam}`;
+
+            switch (gameState.currentPhase) {
+                case 'GK_SELECT':
+                    showMessage(`${defTeamName}(GK) はボールが飛んでくる方向を予想してください。`, 'blue');
+                    els.btnConfirm.classList.remove('hidden');
+                    enableZoneSelection();
+                    break;
+                case 'KICKER_SELECT':
+                    showMessage(`${atkTeamName}(Kicker) は蹴る方向を決定してください。`, 'red');
+                    els.btnConfirm.classList.remove('hidden');
+                    enableZoneSelection();
+                    break;
+                case 'READY_TO_KICK':
+                    showMessage(`両者決定！「勝負！」ボタンを押してください。`, 'yellow');
+                    els.btnAction.classList.remove('hidden');
+                    els.btnAction.disabled = false;
+                    if(gameState.selections.kicker !== null) {
+                        const kZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.kicker}"]`);
+                        kZone.classList.add('selected');
+                    }
+                    break;
+                case 'RESULT':
+                    // 結果表示中
+                    break;
+                case 'GAME_OVER':
+                    let winnerText = "";
+                    if (gameState.score.A > gameState.score.B) winnerText = "チームAの勝利！！";
+                    else if (gameState.score.B > gameState.score.A) winnerText = "チームBの勝利！！";
+                    else winnerText = "引き分け";
+                    
+                    showMessage(`試合終了！ ${winnerText}`, 'green');
+                    els.btnNewGame.classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function showMessage(text, colorType) {
+            els.messageBox.textContent = text;
+            els.messageBox.className = 'pointer-events-auto p-3 rounded-xl shadow-lg text-center font-bold md:text-lg transition-transform duration-300 animate-pop border-4 ';
+            
+            if (colorType === 'blue') els.messageBox.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-900');
+            else if (colorType === 'red') els.messageBox.classList.add('bg-red-100', 'border-red-500', 'text-red-900');
+            else if (colorType === 'green') els.messageBox.classList.add('bg-green-100', 'border-green-500', 'text-green-900');
+            else els.messageBox.classList.add('bg-yellow-100', 'border-yellow-500', 'text-yellow-900');
+        }
+
+        function renderHistory(container, history, isCurrentTurn) {
+            container.innerHTML = '';
+            const maxDots = Math.max(gameState.maxRounds, history.length + (isCurrentTurn ? 1 : 0));
+            
+            for (let i = 0; i < maxDots; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'score-dot';
+                
+                if (i < history.length) {
+                    if (history[i]) dot.classList.add('goal');
+                    else dot.classList.add('miss');
+                } else if (i === history.length && isCurrentTurn) {
+                    dot.classList.add('current');
+                }
+                container.appendChild(dot);
+            }
+        }
+
+        function enableZoneSelection() {
+            els.targetZones.forEach(zone => {
+                zone.classList.add('selectable');
+                zone.onclick = () => {
+                    els.targetZones.forEach(z => z.classList.remove('selected'));
+
+                    zone.classList.add('selected');
+                    selectedZone = parseInt(zone.dataset.pos);
+                    els.btnConfirm.disabled = false;
+                    
+                    zone.classList.remove('animate-pop');
+                    void zone.offsetWidth;
+                    zone.classList.add('animate-pop');
+                };
+            });
+        }
+
+        els.btnConfirm.addEventListener('click', () => {
+            if (selectedZone === null) return;
+
+            if (gameState.currentPhase === 'GK_SELECT') {
+                gameState.selections.gk = selectedZone;
+                showMessage("予想を確定しました。...", 'blue');
+                els.btnConfirm.disabled = true;
+                els.targetZones.forEach(z => z.classList.remove('selectable'));
+                
+                setTimeout(() => {
+                    gameState.currentPhase = 'KICKER_SELECT';
+                    selectedZone = null;
+                    saveGame();
+                    updateUI();
+                }, 1000);
+
+            } else if (gameState.currentPhase === 'KICKER_SELECT') {
+                gameState.selections.kicker = selectedZone;
+                gameState.currentPhase = 'READY_TO_KICK';
+                saveGame();
+                updateUI();
+            }
+        });
+
+        els.btnAction.addEventListener('click', () => {
+            els.btnAction.disabled = true;
+            gameState.currentPhase = 'RESULT';
+            executeAnimation();
+        });
+
+        function executeAnimation() {
+            const kZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.kicker}"]`);
+            const gZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.gk}"]`);
+            
+            const kRect = kZone.getBoundingClientRect();
+            const gRect = gZone.getBoundingClientRect();
+            const ballRect = els.ball.getBoundingClientRect();
+            const gkRect = els.gkContainer.getBoundingClientRect();
+
+            // Transformを利用して相対的に移動させる
+            const ballTargetX = kRect.left + kRect.width / 2;
+            const ballTargetY = kRect.top + kRect.height / 2;
+            const ballCurrentX = ballRect.left + ballRect.width / 2;
+            const ballCurrentY = ballRect.top + ballRect.height / 2;
+            const ballDx = ballTargetX - ballCurrentX;
+            const ballDy = ballTargetY - ballCurrentY;
+
+            const gkTargetX = gRect.left + gRect.width / 2;
+            const gkTargetY = gRect.top + gRect.height / 2;
+            const gkCurrentX = gkRect.left + gkRect.width / 2;
+            const gkCurrentY = gkRect.top + gkRect.height / 2;
+            const gkDx = gkTargetX - gkCurrentX;
+            const gkDy = gkTargetY - gkCurrentY;
+
+            // キッカーのアクション
+            els.kickerDiv.style.transform = "translateX(calc(-50% - 10px)) translateY(-10px) scale(1.1) rotate(-10deg)";
+            
+            els.ball.style.transition = "transform 0.5s cubic-bezier(0.1, 0.8, 0.3, 1)";
+            els.gkContainer.style.transition = "transform 0.4s ease-out";
+            els.gkSvg.style.transition = "transform 0.4s ease-out";
+
+            setTimeout(() => {
+                // ボール移動
+                els.ball.style.transform = `translateX(calc(-50% + ${ballDx}px)) translateY(${ballDy}px) scale(0.6) rotate(720deg)`;
+                
+                // GK移動 (Transformのみで移動させるのでレイアウトは崩れない)
+                els.gkContainer.style.transform = `translateX(calc(-50% + ${gkDx}px)) translateY(${gkDy}px)`;
+                
+                // GKの傾きと縮小
+                let rot = 0;
+                const gPosData = POSITIONS[gameState.selections.gk];
+                if(gPosData.left === '15%') rot = -45;
+                if(gPosData.left === '85%') rot = 45;
+                
+                let scale = (gPosData.top === '15%') ? 0.8 : 0.9;
+                els.gkSvg.style.transform = `rotate(${rot}deg) scale(${scale})`;
+
+                setTimeout(() => {
+                    const isGoal = gameState.selections.kicker !== gameState.selections.gk;
+                    showEffect(isGoal);
+                    processResult(isGoal);
+                }, 500);
+
+            }, 50);
+        }
+
+        function showEffect(isGoal) {
+            els.effectLayer.classList.remove('hidden');
+            els.effectLayer.style.opacity = '1';
+            els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            
+            // アニメーションのリセット
+            els.effectBg.className = 'absolute inset-0';
+            els.effectText.className = 'text-7xl md:text-9xl font-black italic relative z-10 text-center';
+            void els.effectText.offsetWidth; // 強制リフロー
+
+            if (isGoal) {
+                els.effectText.innerHTML = 'GOAL!!';
+                els.effectText.classList.add('effect-goal-text');
+                els.effectBg.classList.add('effect-goal-bg');
+            } else {
+                els.effectText.innerHTML = 'SAVE!!';
+                els.effectText.classList.add('effect-save-text');
+                els.effectBg.classList.add('effect-save-bg');
+            }
+
+            // 演出を一定時間見せた後消す
+            setTimeout(() => {
+                els.effectLayer.style.opacity = '0';
+                setTimeout(() => {
+                    els.effectLayer.classList.add('hidden');
+                    els.effectBg.className = 'absolute inset-0';
+                    els.effectText.className = 'text-7xl md:text-9xl font-black italic relative z-10 text-center';
+                }, 300);
+            }, 2000);
+        }
+
+        function createConfetti() {
+            els.confettiContainer.innerHTML = '';
+            els.confettiContainer.classList.remove('hidden');
+            const colors = ['#fcd34d', '#ef4444', '#3b82f6', '#10b981', '#ffffff'];
+            
+            for(let i=0; i<100; i++) {
+                let conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                conf.style.animationDelay = (Math.random() * 2) + 's';
+                els.confettiContainer.appendChild(conf);
+            }
+        }
+
+        function showWinEffect(scoreA, scoreB) {
+            els.effectLayer.classList.remove('hidden');
+            els.effectLayer.style.opacity = '1';
+            els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.85)';
+            els.effectBg.className = 'absolute inset-0'; // 背景リセット
+            
+            const winner = scoreA > scoreB ? "TEAM A" : "TEAM B";
+            const colorClass = scoreA > scoreB ? "text-red-500" : "text-blue-500";
+            const bgGradient = scoreA > scoreB ? 
+                "repeating-conic-gradient(from 0deg, #7f1d1d 0deg 20deg, #991b1b 20deg 40deg)" : 
+                "repeating-conic-gradient(from 0deg, #1e3a8a 0deg 20deg, #1e40af 20deg 40deg)";
+            
+            // 勝利チームカラーの後光
+            els.effectBg.style.background = bgGradient;
+            els.effectBg.style.animation = "sunburst-spin 15s linear infinite";
+            els.effectBg.style.opacity = "0.5";
+            
+            els.effectText.innerHTML = `
+                <span class="text-3xl md:text-5xl text-white block mb-2 font-bold tracking-widest drop-shadow-md">WINNER</span>
+                <span class="${colorClass} text-8xl md:text-9xl drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] flash-text">${winner}</span>
+            `;
+            els.effectText.className = "text-center font-black italic relative z-10 effect-win-text";
+            
+            createConfetti();
+            
+            // New Game ボタンを手前に持ってくるために、演出をクリックで消せるようにする
+            els.effectLayer.style.pointerEvents = "auto";
+            els.effectLayer.onclick = () => {
+                els.effectLayer.style.opacity = '0';
+                setTimeout(() => {
+                    els.effectLayer.classList.add('hidden');
+                    els.effectLayer.style.pointerEvents = "none";
+                    els.confettiContainer.classList.add('hidden');
+                }, 300);
+            };
+        }
+
+        function processResult(isGoal) {
+            if (gameState.attackingTeam === TEAM_A) {
+                gameState.history.A.push(isGoal);
+                if (isGoal) gameState.score.A++;
+            } else {
+                gameState.history.B.push(isGoal);
+                if (isGoal) gameState.score.B++;
+            }
+
+            updateUI();
+
+            setTimeout(() => {
+                checkWinCondition();
+            }, 2200); // showEffectの終了を待つ
+        }
+
+        function checkWinCondition() {
+            const histA = gameState.history.A.length;
+            const histB = gameState.history.B.length;
+            const scoreA = gameState.score.A;
+            const scoreB = gameState.score.B;
+            
+            let gameEnded = false;
+
+            if (!gameState.isSuddenDeath) {
+                const remainingA = gameState.maxRounds - histA;
+                const remainingB = gameState.maxRounds - histB;
+
+                if (scoreA > scoreB + remainingB) gameEnded = true;
+                if (scoreB > scoreA + remainingA) gameEnded = true;
+
+                if (histA === gameState.maxRounds && histB === gameState.maxRounds) {
+                    if (scoreA !== scoreB) {
+                        gameEnded = true;
+                    } else {
+                        gameState.isSuddenDeath = true;
+                        showMessage("同点！サドンデス(延長戦)へ突入します！", 'yellow');
+                    }
+                }
+            } else {
+                if (histA === histB && scoreA !== scoreB) {
+                    gameEnded = true;
+                }
+            }
+
+            if (gameEnded) {
+                gameState.currentPhase = 'GAME_OVER';
+                saveGame();
+                updateUI();
+                
+                // 派手な勝利演出
+                setTimeout(() => {
+                    showWinEffect(scoreA, scoreB);
+                }, 500);
+
+            } else {
+                els.btnReset.classList.remove('hidden');
+                showMessage("結果を確認したら次へ進んでください", 'blue');
+            }
+        }
+
+        els.btnReset.addEventListener('click', () => {
+            if (gameState.attackingTeam === TEAM_A) {
+                gameState.attackingTeam = TEAM_B;
+            } else {
+                gameState.attackingTeam = TEAM_A;
+                gameState.currentRound++;
+            }
+
+            gameState.selections = { gk: null, kicker: null };
+            gameState.currentPhase = 'GK_SELECT';
+            saveGame();
+            resetVisuals();
+            updateUI();
+        });
+
+        els.btnNewGame.addEventListener('click', () => {
+            resetGame(false);
+        });
+
+        function resetVisuals() {
+            els.ball.style.transition = "none";
+            els.ball.style.transform = ""; 
+            
+            els.gkContainer.style.transition = "none";
+            els.gkContainer.style.transform = ""; 
+            els.gkSvg.style.transition = "none";
+            els.gkSvg.style.transform = "";
+
+            els.kickerDiv.style.transform = ""; 
+            
+            void els.ball.offsetWidth;
+            void els.gkContainer.offsetWidth;
+            
+            els.targetZones.forEach(z => z.classList.remove('selected'));
+        }
+
+        els.btnSettings.addEventListener('click', () => {
+            els.settingRounds.textContent = gameState.maxRounds;
+            els.settingsModal.classList.remove('hidden');
+        });
+
+        els.btnDecRounds.addEventListener('click', () => {
+            let r = parseInt(els.settingRounds.textContent);
+            if (r > 1) els.settingRounds.textContent = r - 1;
+        });
+
+        els.btnIncRounds.addEventListener('click', () => {
+            let r = parseInt(els.settingRounds.textContent);
+            if (r < 10) els.settingRounds.textContent = r + 1;
+        });
+
+        els.btnSaveSettings.addEventListener('click', () => {
+            gameState.maxRounds = parseInt(els.settingRounds.textContent);
+            saveGame();
+            updateUI(); 
+            els.settingsModal.classList.add('hidden');
+        });
+
+        els.btnResetData.addEventListener('click', () => {
+            els.settingsModal.classList.add('hidden');
+            els.resetConfirmModal.classList.remove('hidden');
+        });
+
+        els.btnPromptReset.addEventListener('click', () => {
+            els.resetConfirmModal.classList.remove('hidden');
+        });
+
+        els.btnCancelReset.addEventListener('click', () => {
+            els.resetConfirmModal.classList.add('hidden');
+        });
+
+        els.btnExecuteReset.addEventListener('click', () => {
+            localStorage.removeItem('pkGameState');
+            resetGame(true);
+            els.resetConfirmModal.classList.add('hidden');
+            
+            // エフェクトを強制的に消去する
+            els.effectLayer.style.opacity = '0';
+            els.effectLayer.style.backgroundColor = 'transparent';
+            els.effectLayer.classList.add('hidden');
+            els.effectLayer.style.pointerEvents = "none";
+            els.confettiContainer.classList.add('hidden');
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGame();
+        });
+
+    </script>
+</body>
+</html>
