@@ -15,6 +15,8 @@
             background-size: 50px 50px;
             overflow-x: hidden;
             touch-action: manipulation;
+            height: 100vh;
+            height: 100dvh; /* スマホのアドレスバー・ナビゲーションバー対応 */
         }
 
         /* 既存のアニメーション群 */
@@ -61,11 +63,16 @@
         input:checked ~ #superToggleBg { background-color: #f97316; }
         input:checked ~ .toggle-dot { transform: translateX(1.5rem); background-color: #fff; }
         .super-active-wrap { border-color: #f97316 !important; background-color: rgba(249, 115, 22, 0.2) !important; box-shadow: 0 0 15px rgba(249, 115, 22, 0.5) !important; }
+        
+        /* iPhone(スマホ)の下部セーフエリア対応 */
+        .safe-bottom {
+            padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+        }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col antialiased selection:bg-none overflow-hidden">
+<body class="text-gray-800 flex flex-col antialiased selection:bg-none overflow-hidden">
 
-    <header class="bg-gray-900 text-white p-2 shadow-md flex justify-between items-center z-10 relative">
+    <header class="bg-gray-900 text-white p-2 shadow-md flex justify-between items-center z-10 relative shrink-0">
         <button id="btnPromptReset" class="p-2 bg-red-700 rounded-full hover:bg-red-600 transition flex items-center justify-center gap-1 text-xs font-bold shadow-md" title="リセット">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
@@ -161,7 +168,7 @@
         </div>
     </main>
 
-    <div class="bg-gray-800 p-3 md:p-4 pb-6 md:pb-8 z-40 shadow-up border-t-4 border-gray-600 rounded-t-2xl relative">
+    <div class="bg-gray-800 p-3 md:p-4 safe-bottom z-40 shadow-up border-t-4 border-gray-600 rounded-t-2xl relative shrink-0">
         
         <!-- スーパー機能スイッチ -->
         <div id="superActionContainer" class="hidden flex justify-center mb-3">
