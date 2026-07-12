@@ -264,7 +264,7 @@
             maxRounds: 5,
             currentRound: 1,
             isSuddenDeath: false,
-            currentPhase: 'GK_SELECT', 
+            currentPhase: 'KICKER_SELECT', 
             attackingTeam: TEAM_A,
             teamNames: { A: 'チーム A', B: 'チーム B' },
             score: { A: 0, B: 0 },
@@ -438,9 +438,9 @@
                     
                     els.btnAction.classList.remove('hidden');
                     els.btnAction.disabled = false;
-                    if(gameState.selections.kicker !== null) {
-                        const kZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.kicker}"]`);
-                        kZone.classList.add('selected');
+                    if(gameState.selections.gk !== null) {
+                        const gZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.gk}"]`);
+                        gZone.classList.add('selected');
                     }
                     break;
                 case 'RESULT':
@@ -508,25 +508,25 @@
             if (selectedZone === null) return;
             const defTeam = gameState.attackingTeam === TEAM_A ? TEAM_B : TEAM_A;
 
-            if (gameState.currentPhase === 'GK_SELECT') {
-                gameState.selections.gk = selectedZone;
-                if (!gameState.super[defTeam].saveUsed) gameState.currentAction.superSave = els.chkSuper.checked;
+            if (gameState.currentPhase === 'KICKER_SELECT') {
+                gameState.selections.kicker = selectedZone;
+                if (!gameState.super[gameState.attackingTeam].shootUsed) gameState.currentAction.superShoot = els.chkSuper.checked;
 
-                showMessage("予想を確定しました。...", 'blue');
+                showMessage("決定しました。...", 'red');
                 els.btnConfirm.disabled = true;
                 els.targetZones.forEach(z => z.classList.remove('selectable'));
                 els.superActionContainer.classList.add('hidden');
                 
                 setTimeout(() => {
-                    gameState.currentPhase = 'KICKER_SELECT';
+                    gameState.currentPhase = 'GK_SELECT';
                     selectedZone = null;
                     saveGame();
                     updateUI();
                 }, 1000);
 
-            } else if (gameState.currentPhase === 'KICKER_SELECT') {
-                gameState.selections.kicker = selectedZone;
-                if (!gameState.super[gameState.attackingTeam].shootUsed) gameState.currentAction.superShoot = els.chkSuper.checked;
+            } else if (gameState.currentPhase === 'GK_SELECT') {
+                gameState.selections.gk = selectedZone;
+                if (!gameState.super[defTeam].saveUsed) gameState.currentAction.superSave = els.chkSuper.checked;
                 
                 gameState.currentPhase = 'READY_TO_KICK';
                 saveGame();
@@ -804,7 +804,7 @@
             }
             gameState.selections = { gk: null, kicker: null };
             gameState.currentAction = { superShoot: false, superSave: false };
-            gameState.currentPhase = 'GK_SELECT';
+            gameState.currentPhase = 'KICKER_SELECT';
             saveGame();
             resetVisuals();
             updateUI();
