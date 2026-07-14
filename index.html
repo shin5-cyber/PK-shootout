@@ -1666,10 +1666,22 @@
                 const remainsA = gameState.maxRounds - histA;
                 const remainsB = gameState.maxRounds - histB;
 
+                // チームごとの最大獲得可能点数を計算
+                // 通常の攻撃(1回1点) + スーパーSHOOTの追加(1点) + スーパーSAVEの追加(2点)
+                const maxPossibleScoreA = scoreA 
+                    + remainsA 
+                    + (superStock.A.shoot > 0 && remainsA > 0 ? 1 : 0) 
+                    + (superStock.A.save > 0 && remainsB > 0 ? 2 : 0);
+                    
+                const maxPossibleScoreB = scoreB 
+                    + remainsB 
+                    + (superStock.B.shoot > 0 && remainsB > 0 ? 1 : 0) 
+                    + (superStock.B.save > 0 && remainsA > 0 ? 2 : 0);
+
                 // 早期決着の可能性判定 (数学的な逆転不可能判定)
-                if (scoreA > scoreB + remainsB) {
+                if (scoreA > maxPossibleScoreB) {
                     isGameOver = true;
-                } else if (scoreB > scoreA + remainsA) {
+                } else if (scoreB > maxPossibleScoreA) {
                     isGameOver = true;
                 }
 
