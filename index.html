@@ -3,132 +3,690 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PK戦ゲーム - スーパー機能搭載</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>PK戦ゲーム - 激闘！PK対決</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
 
-        body {
-            font-family: 'M PLUS Rounded 1c', sans-serif;
-            background-color: #2ecc71;
-            background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent);
-            background-size: 50px 50px;
-            overflow-x: hidden;
-            touch-action: manipulation;
-            height: 100vh;
-            height: 100dvh; /* スマホのアドレスバー・ナビゲーションバー対応 */
+        :root {
+            --team-a-color: #ef4444; /* 赤 */
+            --team-b-color: #3b82f6; /* 青 */
+            --pitch-color: #2ecc71;  /* サッカー場の緑 */
         }
 
-        /* 既存のアニメーション群 */
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes sunburst-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes text-zoom-in-bounce { 0% { opacity: 0; transform: scale(0.1) rotate(-15deg); } 50% { opacity: 1; transform: scale(1.5) rotate(-5deg); } 70% { transform: scale(0.9) rotate(-10deg); } 100% { transform: scale(1) rotate(-12deg); } }
-        @keyframes text-impact { 0% { opacity: 0; transform: scale(3); filter: blur(10px); } 20% { opacity: 1; transform: scale(1); filter: blur(0); } 30% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes heartbeat { 0% { transform: scale(1); opacity: 0.5; } 15% { transform: scale(1.1); opacity: 1; text-shadow: 0 0 20px rgba(255,255,255,0.8); } 30% { transform: scale(1); opacity: 0.5; } 45% { transform: scale(1.1); opacity: 1; text-shadow: 0 0 20px rgba(255,255,255,0.8); } 100% { transform: scale(1); opacity: 0.5; } }
-        @keyframes shake-intense { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 10%, 30%, 50%, 70%, 90% { transform: translate(-8px, -8px) rotate(-3deg); } 20%, 40%, 60%, 80% { transform: translate(8px, 8px) rotate(3deg); } }
-        @keyframes slow-zoom-in { 0% { transform: scale(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
-        @keyframes fast-heartbeat { 0% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.3); opacity: 1; text-shadow: 0 0 20px rgba(255,0,0,0.8); color: #f87171;} 100% { transform: scale(1); opacity: 0.5; } }
-        @keyframes glitch-flash { 0%, 100% { opacity: 1; transform: scale(1); filter: invert(0); } 10%, 30%, 50%, 70%, 90% { opacity: 0.8; transform: scale(1.05) translate(-5px, 5px); filter: invert(0.2); } 20%, 40%, 60%, 80% { opacity: 0.9; transform: scale(0.95) translate(5px, -5px); filter: invert(0); } }
-        @keyframes letter-spacing-shrink { 0% { letter-spacing: 1.5em; opacity: 0; filter: blur(5px); } 100% { letter-spacing: 0.1em; opacity: 1; filter: blur(0); } }
-        @keyframes confetti-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-user-select: none;
+            user-select: none;
+        }
 
-        .animate-pop { animation: pop 0.3s ease-in-out; }
-        .flash-text { text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0px 4px 10px rgba(0,0,0,0.5); }
-        
-        .effect-goal-bg { background: repeating-conic-gradient(from 0deg, #fcd34d 0deg 20deg, #fbbf24 20deg 40deg); animation: sunburst-spin 10s linear infinite; opacity: 0.6; }
-        .effect-goal-text { color: #fde047; text-shadow: 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 0 30px #facc15, 0 0 60px #facc15; animation: text-zoom-in-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        
-        .effect-save-bg { background: repeating-conic-gradient(from 0deg, #ef4444 0deg 20deg, #dc2626 20deg 40deg); animation: sunburst-spin 5s linear infinite reverse; opacity: 0.6; }
-        .effect-save-text { color: #f87171; text-shadow: 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 0 30px #ef4444, 0 0 60px #b91c1c; animation: text-impact 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; transform: rotate(12deg); }
-        
-        .effect-win-text { animation: text-zoom-in-bounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .confetti { position: absolute; width: 15px; height: 15px; background-color: #fff; animation: confetti-fall 3s linear infinite; }
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: var(--pitch-color);
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent), 
+                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .1) 25%, rgba(255, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .1) 75%, rgba(255, 255, 255, .1) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            overflow: hidden;
+            touch-action: manipulation;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            color: #1f2937;
+        }
 
-        .target-zone { transition: all 0.2s ease; position: relative; }
-        .target-zone::after { content: "○"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: rgba(255, 255, 255, 0.7); font-weight: bold; transition: all 0.2s; }
-        .target-zone.selectable:hover { background-color: rgba(255, 255, 255, 0.3); cursor: pointer; }
-        .target-zone.selected::after { content: "●"; color: #fbbf24; text-shadow: 0 0 10px rgba(0,0,0,0.5); transform: translate(-50%, -50%) scale(1.2); }
+        /* */
+        .app-header {
+            background-color: #111827;
+            color: #ffffff;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+            position: relative;
+        }
 
-        .score-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ccc; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; background-color: #fff; position: relative; }
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #facc15, #f97316);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            flex: 1;
+        }
+
+        /* ボタン共通 */
+        .btn-icon {
+            background-color: #374151;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-icon:hover { background-color: #4b5563; }
+        .btn-icon:active { transform: scale(0.95); }
+        .btn-icon.danger { background-color: #b91c1c; }
+        .btn-icon.danger:hover { background-color: #dc2626; }
+
+        .scoreboard {
+            background-color: rgba(255, 255, 255, 0.92);
+            border: 4px solid #1f2937;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 30;
+            position: relative;
+        }
+
+        .team-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 35%;
+        }
+
+        .team-name {
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .team-panel.team-a .team-name { color: var(--team-a-color); }
+        .team-panel.team-b .team-name { color: var(--team-b-color); }
+
+        .team-score {
+            font-size: 2.25rem;
+            font-weight: 900;
+            line-height: 1;
+            margin: 4px 0;
+        }
+
+        .history-dots {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+            min-height: 24px;
+        }
+
+        .score-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #9ca3af;
+            background-color: #ffffff;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 900;
+        }
         .score-dot.goal { border-color: #10b981; color: #10b981; }
-        .score-dot.goal::after { content: "〇"; position: absolute; }
+        .score-dot.goal::after { content: "〇"; }
+        .score-dot.super-goal { border-color: #f59e0b; color: #f59e0b; background-color: #fef3c7; }
+        .score-dot.super-goal::after { content: "★"; }
         .score-dot.miss { border-color: #ef4444; color: #ef4444; }
-        .score-dot.miss::after { content: "✕"; position: absolute; }
-        .score-dot.current { border-color: #3b82f6; box-shadow: 0 0 5px #3b82f6; }
+        .score-dot.miss::after { content: "✕"; }
+        .score-dot.current { border-color: #3b82f6; box-shadow: 0 0 6px #3b82f6; background-color: #eff6ff; }
 
-        .goal-net { background-image: linear-gradient(45deg, rgba(255,255,255,0.4) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.4) 75%, rgba(255,255,255,0.4)), linear-gradient(45deg, rgba(255,255,255,0.4) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.4) 75%, rgba(255,255,255,0.4)); background-size: 20px 20px; background-position: 0 0, 10px 10px; }
+        .vs-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 16px;
+            border-left: 2px solid #e5e7eb;
+            border-right: 2px solid #e5e7eb;
+        }
+
+        .round-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+
+        .vs-badge {
+            background-color: #1f2937;
+            color: white;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+        }
+
+        .game-main {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* 指示メッセージ */
+        .msg-container {
+            position: absolute;
+            top: 12px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .msg-bubble {
+            pointer-events: auto;
+            width: 90%;
+            max-width: 480px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            border: 4px solid #eab308;
+            background-color: #fef9c3;
+            color: #713f12;
+            transition: all 0.3s ease;
+        }
+        .msg-bubble.blue { border-color: #3b82f6; background-color: #dbeafe; color: #1e3a8a; }
+        .msg-bubble.red { border-color: #ef4444; background-color: #fee2e2; color: #7f1d1d; }
+        .msg-bubble.green { border-color: #22c55e; background-color: #dcfce7; color: #064e3b; }
+
+        /* */
+        /* ゴールネット構造（完全固定） */
+        .goal-frame {
+            position: absolute;
+            top: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 580px;
+            height: 180px;
+            border-top: 8px solid #ffffff;
+            border-left: 8px solid #ffffff;
+            border-right: 8px solid #ffffff;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            background-color: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
         
-        /* スーパー機能トグル用CSS */
-        .toggle-dot { top: 0.25rem; left: 0.25rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        input:checked ~ #superToggleBg { background-color: #f97316; }
-        input:checked ~ .toggle-dot { transform: translateX(1.5rem); background-color: #fff; }
-        .super-active-wrap { border-color: #f97316 !important; background-color: rgba(249, 115, 22, 0.2) !important; box-shadow: 0 0 15px rgba(249, 115, 22, 0.5) !important; }
-        
-        /* iPhone(スマホ)の下部セーフエリア対応 */
-        .safe-bottom {
-            padding-bottom: max(1.5rem, calc(1rem + env(safe-area-inset-bottom)));
+        .goal-frame::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(45deg, rgba(255,255,255,0.25) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.25) 75%, rgba(255,255,255,0.25)), 
+                linear-gradient(45deg, rgba(255,255,255,0.25) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.25) 75%, rgba(255,255,255,0.25));
+            background-size: 16px 16px;
+            background-position: 0 0, 8px 8px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        /* ターゲットグリッド(ゴールに内包して完全同期) */
+        .target-grid {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 2px;
+            padding: 2px;
+            z-index: 15;
+        }
+
+        .zone-cell {
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .zone-cell::after {
+            content: "○";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.2s, color 0.2s;
+        }
+        .zone-cell.active:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+        .zone-cell.selected::after {
+            content: "●";
+            color: #fbbf24;
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+        .zone-cell.hide-indicator::after {
+            opacity: 0;
+        }
+
+        /* キーパーの配置 (ゴールの底辺に配置し、少し手前にずらす) */
+        .gk-wrapper {
+            position: absolute;
+            bottom: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            z-index: 20;
+            pointer-events: none;
+            transition: none; /* JSでダイナミックに変化 */
+        }
+
+        /* ボールとキッカーのコンテナ（画面下部に絶対配置） */
+        .pitch-bottom-area {
+            position: absolute;
+            bottom: 24px;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .ball-wrapper {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 44px;
+            height: 44px;
+            z-index: 22;
+            pointer-events: none;
+        }
+
+        .kicker-wrapper {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            margin-left: 90px; /* ボールから右側に避ける */
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            z-index: 21;
+            pointer-events: none;
+            transition: transform 0.3s ease-out;
+        }
+
+        /* 下部ボタン操作エリア */
+        .control-panel {
+            background-color: #1f2937;
+            padding: 16px;
+            border-top: 4px solid #4b5563;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            z-index: 35;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .btn-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .super-toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #374151;
+            border-radius: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 2px dashed #9ca3af;
+        }
+        .super-toggle-container.active {
+            background-color: #78350f;
+            border-color: #f59e0b;
+        }
+
+        .super-toggle-label {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .super-toggle-container.active .super-toggle-label {
+            color: #fbbf24;
+        }
+
+        /* トグルインジケータ */
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background-color: #4b5563;
+            border-radius: 9999px;
+            position: relative;
+            margin-left: auto;
+            transition: background 0.2s;
+        }
+        .super-toggle-container.active .toggle-switch {
+            background-color: #f59e0b;
+        }
+        .toggle-switch::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            transition: transform 0.2s;
+        }
+        .super-toggle-container.active .toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+        /* */
+        /* 巨大アクションボタン */
+        .btn-action {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.25rem;
+            font-weight: 900;
+            padding: 14px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-confirm {
+            background-color: #10b981;
+            box-shadow: 0 6px 0 #047857;
+        }
+        .btn-confirm:not(:disabled):active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #047857;
+        }
+
+        .btn-kick {
+            background-color: #dc2626;
+            box-shadow: 0 6px 0 #991b1b;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .btn-kick:not(:disabled):active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #991b1b;
+        }
+
+        .btn-next {
+            background-color: #3b82f6;
+            box-shadow: 0 6px 0 #1d4ed8;
+        }
+        .btn-next:not(:disabled):active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1d4ed8;
+        }
+
+        .btn-restart {
+            background-color: #eab308;
+            color: #111827;
+            box-shadow: 0 6px 0 #a16207;
+        }
+        .btn-restart:not(:disabled):active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #a16207;
+        }
+
+        .hidden { display: none !important; }
+
+        /* 派手な演出レイヤー */
+        .effect-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .effect-layer.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .effect-bg {
+            position: absolute;
+            inset: 0;
+            transform: scale(1.5);
+            z-index: 1;
+        }
+
+        .effect-title {
+            font-size: 4rem;
+            font-weight: 900;
+            font-style: italic;
+            text-align: center;
+            position: relative;
+            z-index: 5;
+            line-height: 1.2;
+            word-break: break-word;
+            padding: 0 16px;
+        }
+
+        /* モーダル共通 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 380px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #111827;
+        }
+
+        /* 設定項目のスタイル */
+        .setting-item {
+            margin-bottom: 20px;
+        }
+        .setting-label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .setting-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 700;
+        }
+        .setting-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .round-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #f3f4f6;
+            padding: 6px;
+            border-radius: 12px;
+        }
+        .stepper-btn {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stepper-btn:active { background-color: #f3f4f6; }
+        .stepper-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-modal {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .btn-modal.primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-modal.danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-modal.secondary {
+            background-color: #e5e7eb;
+            color: #374151;
         }
     </style>
 </head>
-<body class="text-gray-800 flex flex-col antialiased selection:bg-none overflow-hidden">
+<body>
 
-    <header class="bg-gray-900 text-white p-2 shadow-md flex justify-between items-center z-10 relative shrink-0">
-        <button id="btnPromptReset" class="p-2 bg-red-700 rounded-full hover:bg-red-600 transition flex items-center justify-center gap-1 text-xs font-bold shadow-md" title="リセット">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+    <!-- ヘッダー -->
+    <header class="app-header">
+        <button id="btnPromptReset" class="btn-icon danger" title="リセット">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6.21M20 4v5h-5" />
             </svg>
-            <span class="hidden md:inline">リセット</span>
         </button>
-        <h1 class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 px-2 text-center leading-tight">
-            激闘！ PK対決
-        </h1>
-        <button id="btnSettings" class="p-2 bg-gray-700 rounded-full hover:bg-gray-600 transition shadow-md">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h1 class="app-title">激闘！ PK対決</h1>
+        <button id="btnSettings" class="btn-icon" title="設定">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
         </button>
     </header>
 
-    <div class="bg-white bg-opacity-95 p-2 md:p-3 m-2 rounded-xl shadow-lg flex justify-between items-center z-10 border-4 border-gray-800">
-        <div class="flex flex-col items-center flex-1 w-1/3 truncate">
-            <span id="displayTeamA" class="text-red-600 font-bold text-sm md:text-lg truncate w-full text-center px-1">チーム A</span>
-            <span id="scoreA" class="text-3xl md:text-4xl font-black">0</span>
-            <div id="historyA" class="flex gap-1 mt-1 flex-wrap justify-center min-h-[24px]"></div>
+    <!-- スコアボード -->
+    <div class="scoreboard">
+        <div class="team-panel team-a">
+            <span id="displayTeamA" class="team-name">チーム A</span>
+            <span id="scoreA" class="team-score">0</span>
+            <div id="historyA" class="history-dots"></div>
         </div>
         
-        <div class="flex flex-col items-center px-2 md:px-4 border-x-2 border-gray-300">
-            <div class="text-xs md:text-sm font-bold text-gray-500 mb-1" id="roundDisplay">ROUND 1</div>
-            <div class="text-xl md:text-2xl font-black bg-gray-800 text-white px-2 py-1 rounded">VS</div>
+        <div class="vs-panel">
+            <div id="roundDisplay" class="round-label">ROUND 1</div>
+            <div class="vs-badge">VS</div>
         </div>
 
-        <div class="flex flex-col items-center flex-1 w-1/3 truncate">
-            <span id="displayTeamB" class="text-blue-600 font-bold text-sm md:text-lg truncate w-full text-center px-1">チーム B</span>
-            <span id="scoreB" class="text-3xl md:text-4xl font-black">0</span>
-            <div id="historyB" class="flex gap-1 mt-1 flex-wrap justify-center min-h-[24px]"></div>
+        <div class="team-panel team-b">
+            <span id="displayTeamB" class="team-name">チーム B</span>
+            <span id="scoreB" class="team-score">0</span>
+            <div id="historyB" class="history-dots"></div>
         </div>
     </div>
 
-    <main class="flex-1 relative w-full overflow-hidden" id="gameArea">
-        <div class="absolute top-2 left-0 w-full flex justify-center z-30 pointer-events-none">
-            <div id="messageBox" class="pointer-events-auto bg-yellow-100 border-4 border-yellow-500 text-yellow-900 p-2 md:p-3 rounded-xl shadow-lg text-center font-bold text-sm md:text-lg transition-transform duration-300 w-11/12 max-w-lg leading-tight">
-                ゲーム開始！
+    <!-- -->
+    <!-- メイングラウンド -->
+    <main class="game-main" id="gameArea">
+        
+        <!-- 指示システムメッセージ -->
+        <div class="msg-container">
+            <div id="messageBox" class="msg-bubble">
+                キッカー(Kicker) の狙いを選択してください。
             </div>
         </div>
 
-        <div class="absolute top-20 md:top-24 left-1/2 transform -translate-x-1/2 w-11/12 max-w-2xl h-44 md:h-64 border-t-8 border-l-8 border-r-8 border-white rounded-t-lg bg-blue-500 bg-opacity-20 goal-net shadow-2xl flex flex-col" id="goalArea">
-            <div id="targetGrid" class="flex-1 grid grid-cols-3 grid-rows-2 gap-1 p-1 h-full w-full absolute inset-0 z-10">
-                <div class="target-zone" data-pos="0"></div>
-                <div class="target-zone" data-pos="1"></div>
-                <div class="target-zone" data-pos="2"></div>
-                <div class="target-zone" data-pos="3"></div>
-                <div class="target-zone" data-pos="4"></div>
-                <div class="target-zone" data-pos="5"></div>
+        <!-- 固定されるゴールエリア -->
+        <div class="goal-frame" id="goalArea">
+            <div id="targetGrid" class="target-grid">
+                <div class="zone-cell" data-pos="0"></div>
+                <div class="zone-cell" data-pos="1"></div>
+                <div class="zone-cell" data-pos="2"></div>
+                <div class="zone-cell" data-pos="3"></div>
+                <div class="zone-cell" data-pos="4"></div>
+                <div class="zone-cell" data-pos="5"></div>
             </div>
 
-            <div id="goalkeeper" class="absolute -bottom-4 md:-bottom-8 left-1/2 transform -translate-x-1/2 z-20 w-16 h-16 md:w-24 md:h-24 pointer-events-none">
+            <!-- キーパー -->
+            <div id="goalkeeper" class="gk-wrapper">
                 <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg" id="gkSvg">
-                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#EF4444" id="gkBody" />
+                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#ef4444" id="gkBody" />
                     <circle cx="50" cy="30" r="25" fill="#FFE0BD" />
                     <circle cx="40" cy="25" r="3" fill="#333" />
                     <circle cx="60" cy="25" r="3" fill="#333" />
@@ -140,8 +698,10 @@
             </div>
         </div>
 
-        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-2xl h-24 md:h-32 flex justify-center items-end pointer-events-none">
-            <div id="ball" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 w-8 h-8 md:w-12 md:h-12 pointer-events-none">
+        <!-- 画面下部ピッチエリア -->
+        <div class="pitch-bottom-area">
+            <!-- サッカーボール -->
+            <div id="ball" class="ball-wrapper">
                 <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
                     <circle cx="50" cy="50" r="45" fill="white" stroke="#333" stroke-width="2"/>
                     <path d="M 50 5 L 75 25 L 65 55 L 35 55 L 25 25 Z" fill="#333"/>
@@ -153,9 +713,10 @@
                 </svg>
             </div>
 
-            <div id="kicker" class="absolute bottom-2 left-1/2 ml-12 md:ml-24 transform -translate-x-1/2 z-20 w-16 h-16 md:w-24 md:h-24 pointer-events-none transition-transform duration-300">
+            <!-- キッカー -->
+            <div id="kicker" class="kicker-wrapper">
                  <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg" id="kickerSvg">
-                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#3B82F6" id="kickerBody" />
+                    <rect x="30" y="50" width="40" height="35" rx="10" fill="#3b82f6" id="kickerBody" />
                     <circle cx="50" cy="30" r="25" fill="#FFE0BD" />
                     <circle cx="40" cy="25" r="3" fill="#333" />
                     <circle cx="60" cy="25" r="3" fill="#333" />
@@ -166,215 +727,417 @@
                 </svg>
             </div>
         </div>
+
     </main>
 
-    <div class="bg-gray-800 p-3 md:p-4 safe-bottom z-40 shadow-up border-t-4 border-gray-600 rounded-t-2xl relative shrink-0">
-        
-        <!-- スーパー機能スイッチ -->
-        <div id="superActionContainer" class="hidden flex justify-center mb-3">
-            <label class="flex items-center cursor-pointer bg-gray-700 p-2 md:p-3 rounded-xl shadow-inner border-2 border-transparent transition-colors" id="superActionLabelWrap">
-                <div class="relative">
-                    <input type="checkbox" id="chkSuper" class="sr-only">
-                    <div class="block bg-gray-600 w-12 h-7 md:w-14 md:h-8 rounded-full transition duration-300" id="superToggleBg"></div>
-                    <div class="toggle-dot absolute bg-white w-5 h-5 md:w-6 md:h-6 rounded-full shadow transform duration-300"></div>
-                </div>
-                <div class="ml-2 md:ml-3 text-white font-bold text-xs md:text-sm tracking-wide" id="superActionText">
-                    🔥 スーパー機能発動
-                </div>
-            </label>
-        </div>
+    <!-- コントロールエリア -->
+    <div class="control-panel">
+        <div class="btn-row">
+            <!-- スーパー機能トグルスイッチ -->
+            <div id="superToggle" class="super-toggle-container hidden">
+                <span class="super-toggle-label">
+                    <span id="superToggleEmoji">🔥</span> <span id="superToggleText">スーパーSHOOTを発動！</span>
+                </span>
+                <div class="toggle-switch"></div>
+            </div>
 
-        <div class="flex justify-center gap-2 md:gap-4 max-w-md mx-auto">
-            <button id="btnConfirm" class="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl text-lg md:text-xl shadow-[0_6px_0_#166534] active:shadow-[0_2px_0_#166534] active:translate-y-1 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <!-- 主要アクションボタン -->
+            <button id="btnConfirm" class="btn-action btn-confirm">
                 決定
             </button>
-            <button id="btnAction" class="hidden flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl text-lg md:text-xl shadow-[0_6px_0_#7f1d1d] active:shadow-[0_2px_0_#7f1d1d] active:translate-y-1 transition flash-text disabled:opacity-50 disabled:cursor-not-allowed">
+            <button id="btnAction" class="btn-action btn-kick hidden">
                 勝負！
             </button>
-            <button id="btnReset" class="hidden flex-1 bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl text-lg md:text-xl shadow-[0_6px_0_#1e3a8a] active:shadow-[0_2px_0_#1e3a8a] active:translate-y-1 transition">
+            <button id="btnReset" class="btn-action btn-next hidden">
                 次のラウンドへ
             </button>
-            <button id="btnNewGame" class="hidden w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-black py-3 md:py-4 px-4 md:px-6 rounded-xl text-lg md:text-xl shadow-[0_6px_0_#a16207] active:shadow-[0_2px_0_#a16207] active:translate-y-1 transition">
+            <button id="btnNewGame" class="btn-action btn-restart hidden">
                 はじめから遊ぶ
             </button>
         </div>
     </div>
 
-    <div id="effectLayer" class="fixed inset-0 z-50 flex flex-col items-center justify-center opacity-0 transition-opacity duration-300 hidden overflow-hidden pointer-events-none">
-        <div id="effectBg" class="absolute inset-0"></div>
-        <div id="confettiContainer" class="absolute inset-0 overflow-hidden hidden"></div>
-        <h2 id="effectText" class="text-5xl md:text-8xl font-black italic relative z-10 text-center leading-tight"></h2>
+    <!-- 演出レイヤー -->
+    <div id="effectLayer" class="effect-layer">
+        <div id="effectBg" class="effect-bg"></div>
+        <h2 id="effectText" class="effect-title"></h2>
     </div>
 
-    <div id="resetConfirmModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-2xl max-w-sm w-11/12 shadow-2xl text-center">
-            <h2 class="text-xl font-bold mb-4 text-red-600">ゲームをリセットしますか？</h2>
-            <p class="text-gray-600 mb-6 font-medium">現在のスコアや履歴はすべて消去され、最初からになります。</p>
-            <div class="flex justify-center gap-4">
-                <button id="btnCancelReset" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-xl transition">キャンセル</button>
-                <button id="btnExecuteReset" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl shadow-[0_4px_0_#7f1d1d] active:shadow-[0_0px_0_#7f1d1d] active:translate-y-1 transition">リセットする</button>
+    <!-- リセット確認モーダル -->
+    <div id="resetConfirmModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="modal-title" style="color: #ef4444;">ゲームをリセットしますか？</h2>
+            <p style="color: #4b5563; font-weight: 700; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">
+                現在のスコアや履歴はすべて消去され、最初からになります。
+            </p>
+            <div class="modal-actions">
+                <button id="btnCancelReset" class="btn-modal secondary">キャンセル</button>
+                <button id="btnExecuteReset" class="btn-modal danger">リセットする</button>
             </div>
         </div>
     </div>
 
-    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-2xl max-w-sm w-11/12 shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4 text-center border-b-2 pb-2">ゲーム設定</h2>
+    <!-- 設定モーダル -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">設定</h2>
             
-            <div class="mb-4">
-                <label class="block text-gray-700 font-bold mb-1 text-sm">チームA の名前</label>
-                <input type="text" id="settingTeamA" class="w-full border-2 border-gray-300 p-2 rounded-lg font-bold" placeholder="チーム A" maxlength="10">
+            <!-- チーム名登録（任意） -->
+            <div class="setting-item">
+                <label class="setting-label">チームAの名前</label>
+                <input type="text" id="inputTeamA" class="setting-input" placeholder="チーム A" maxlength="10">
             </div>
-            <div class="mb-6">
-                <label class="block text-gray-700 font-bold mb-1 text-sm">チームB の名前</label>
-                <input type="text" id="settingTeamB" class="w-full border-2 border-gray-300 p-2 rounded-lg font-bold" placeholder="チーム B" maxlength="10">
+            <div class="setting-item">
+                <label class="setting-label">チームBの名前</label>
+                <input type="text" id="inputTeamB" class="setting-input" placeholder="チーム B" maxlength="10">
             </div>
 
-            <div class="mb-6">
-                <label class="block text-gray-700 font-bold mb-2 text-sm">対戦回数 (ラウンド数)</label>
-                <div class="flex items-center justify-between bg-gray-100 p-2 rounded-lg">
-                    <button id="btnDecRounds" class="w-10 h-10 bg-gray-300 rounded-full font-bold text-xl hover:bg-gray-400">-</button>
-                    <span id="settingRounds" class="text-2xl font-black">5</span>
-                    <button id="btnIncRounds" class="w-10 h-10 bg-gray-300 rounded-full font-bold text-xl hover:bg-gray-400">+</button>
+            <!-- ラウンド数 -->
+            <div class="setting-item">
+                <label class="setting-label">対戦回数 (ラウンド数)</label>
+                <div class="round-stepper">
+                    <button id="btnDecRounds" class="stepper-btn">-</button>
+                    <span id="settingRounds" class="stepper-value">5</span>
+                    <button id="btnIncRounds" class="stepper-btn">+</button>
                 </div>
+                <p style="font-size: 0.75rem; color: #6b7280; text-align: center; margin-top: 8px;">
+                    ※同点の場合は決着がつくまでサドンデスとなります。
+                </p>
             </div>
 
-            <div class="flex justify-center gap-4">
-                <button id="btnSaveSettings" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl shadow-md w-full">保存して閉じる</button>
+            <div class="modal-actions">
+                <button id="btnSaveSettings" class="btn-modal primary" style="width: 100%;">保存して閉じる</button>
             </div>
-            <div class="mt-4 flex justify-center">
-                 <button id="btnResetData" class="text-red-500 underline text-sm">セーブデータを消去してリセット</button>
+            <div style="text-align: center; margin-top: 16px;">
+                 <button id="btnResetData" style="color: #ef4444; font-size: 0.8rem; font-weight: 700; border: none; background: none; text-decoration: underline; cursor: pointer;">
+                     セーブデータを消去して初期化
+                 </button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- Web Audio API 効果音エンジン ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playClick() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playWhistle() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const playSingle = (delay, dur) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1800, now + delay);
+                    gain.gain.setValueAtTime(0, now + delay);
+                    gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+                    osc.start(now + delay);
+                    osc.stop(now + delay + dur);
+                };
+                playSingle(0, 0.2);
+                playSingle(0.25, 0.12);
+            }
+
+            playHeartbeat(freqScale = 1) {
+                this.init();
+                const now = this.ctx.currentTime;
+                const playBeep = (delay) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(90, now + delay);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + delay + 0.15);
+                    gain.gain.setValueAtTime(0.35, now + delay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.15);
+                    osc.start(now + delay);
+                    osc.stop(now + delay + 0.15);
+                };
+                playBeep(0);
+                playBeep(0.18 * freqScale);
+            }
+
+            playKick() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+
+            playGoal() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const playTone = (freq, delay, dur) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + delay);
+                    gain.gain.setValueAtTime(0, now + delay);
+                    gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+                    osc.start(now + delay);
+                    osc.stop(now + delay + dur);
+                };
+                playTone(523.25, 0, 0.25);
+                playTone(659.25, 0.1, 0.25);
+                playTone(783.99, 0.2, 0.25);
+                playTone(1046.50, 0.3, 0.8);
+            }
+
+            playSave() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.start();
+                osc.stop(now + 0.12);
+
+                try {
+                    const bufferSize = this.ctx.sampleRate * 0.15;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 3000;
+                    const noiseGain = this.ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.15, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                    noise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(this.ctx.destination);
+                    noise.start(now);
+                    noise.stop(now + 0.12);
+                } catch(e) {}
+            }
+
+            playVictory() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const melody = [
+                    { f: 523.25, d: 0.12 },
+                    { f: 523.25, d: 0.12 },
+                    { f: 523.25, d: 0.12 },
+                    { f: 523.25, d: 0.35 },
+                    { f: 415.30, d: 0.35 },
+                    { f: 466.16, d: 0.35 },
+                    { f: 523.25, d: 0.18 },
+                    { f: 466.16, d: 0.18 },
+                    { f: 523.25, d: 0.8 }
+                ];
+                let accumTime = 0;
+                melody.forEach(note => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(note.f, now + accumTime);
+                    gain.gain.setValueAtTime(0, now + accumTime);
+                    gain.gain.linearRampToValueAtTime(0.08, now + accumTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + accumTime + note.d);
+                    osc.start(now + accumTime);
+                    osc.stop(now + accumTime + note.d);
+                    accumTime += note.d + 0.05;
+                });
+            }
+        }
+
         const TEAM_A = 'A';
         const TEAM_B = 'B';
-        const TEAM_A_COLOR = '#EF4444'; 
-        const TEAM_B_COLOR = '#3B82F6'; 
-        
+        const TEAM_A_COLOR = '#ef4444'; // 赤
+        const TEAM_B_COLOR = '#3b82f6'; // 青
+
+        // 6か所のポジション構成
         const POSITIONS = [
-            { id: 0, top: '15%', left: '15%' }, { id: 1, top: '15%', left: '50%' }, { id: 2, top: '15%', left: '85%' },
-            { id: 3, top: '75%', left: '15%' }, { id: 4, top: '75%', left: '50%' }, { id: 5, top: '75%', left: '85%' }
+            { id: 0, name: '左上', top: '15%', left: '15%' },
+            { id: 1, name: '真ん中上', top: '15%', left: '50%' },
+            { id: 2, name: '右上', top: '15%', left: '85%' },
+            { id: 3, name: '左下', top: '75%', left: '15%' },
+            { id: 4, name: '真ん中下', top: '75%', left: '50%' },
+            { id: 5, name: '右下', top: '75%', left: '85%' }
         ];
 
-        // 初期ステート (スーパー機能やチーム名を追加)
+        // デフォルトのゲームステート
         const defaultState = {
             maxRounds: 5,
             currentRound: 1,
             isSuddenDeath: false,
-            currentPhase: 'KICKER_SELECT', 
+            currentPhase: 'KICKER_SELECT', // キッカーが先
             attackingTeam: TEAM_A,
-            teamNames: { A: 'チーム A', B: 'チーム B' },
             score: { A: 0, B: 0 },
-            history: { A: [], B: [] }, // 各要素は { result: bool, super: bool }
-            selections: { gk: null, kicker: null },
-            super: {
-                A: { shootUsed: false, saveUsed: false },
-                B: { shootUsed: false, saveUsed: false }
-            },
-            currentAction: { superShoot: false, superSave: false }
+            history: { A: [], B: [] },
+            selections: { gk: null, kicker: null, superShoot: false, superSave: false }
         };
 
+        const se = new SoundEngine();
+
+        // 動的なステート変数
         let gameState = JSON.parse(JSON.stringify(defaultState));
         let selectedZone = null;
+        let isSuperActive = false; // スーパー機能オンオフ
 
-        const els = {
-            targetZones: document.querySelectorAll('.target-zone'),
-            messageBox: document.getElementById('messageBox'),
-            btnConfirm: document.getElementById('btnConfirm'),
-            btnAction: document.getElementById('btnAction'),
-            btnReset: document.getElementById('btnReset'),
-            btnNewGame: document.getElementById('btnNewGame'),
-            scoreA: document.getElementById('scoreA'),
-            scoreB: document.getElementById('scoreB'),
-            displayTeamA: document.getElementById('displayTeamA'),
-            displayTeamB: document.getElementById('displayTeamB'),
-            historyA: document.getElementById('historyA'),
-            historyB: document.getElementById('historyB'),
-            roundDisplay: document.getElementById('roundDisplay'),
-            gkBody: document.getElementById('gkBody'),
-            kickerBody: document.getElementById('kickerBody'),
-            gkContainer: document.getElementById('goalkeeper'),
-            gkSvg: document.getElementById('gkSvg'),
-            ball: document.getElementById('ball'),
-            kickerDiv: document.getElementById('kicker'),
-            effectLayer: document.getElementById('effectLayer'),
-            effectText: document.getElementById('effectText'),
-            effectBg: document.getElementById('effectBg'),
-            confettiContainer: document.getElementById('confettiContainer'),
-            
-            chkSuper: document.getElementById('chkSuper'),
-            superActionContainer: document.getElementById('superActionContainer'),
-            superActionText: document.getElementById('superActionText'),
-            superActionLabelWrap: document.getElementById('superActionLabelWrap'),
-
-            btnSettings: document.getElementById('btnSettings'),
-            settingsModal: document.getElementById('settingsModal'),
-            settingTeamA: document.getElementById('settingTeamA'),
-            settingTeamB: document.getElementById('settingTeamB'),
-            btnDecRounds: document.getElementById('btnDecRounds'),
-            btnIncRounds: document.getElementById('btnIncRounds'),
-            settingRounds: document.getElementById('settingRounds'),
-            btnSaveSettings: document.getElementById('btnSaveSettings'),
-            btnResetData: document.getElementById('btnResetData'),
-            
-            btnPromptReset: document.getElementById('btnPromptReset'),
-            resetConfirmModal: document.getElementById('resetConfirmModal'),
-            btnCancelReset: document.getElementById('btnCancelReset'),
-            btnExecuteReset: document.getElementById('btnExecuteReset')
+        // A/Bチームのスーパー機能使用権ストック
+        let superStock = {
+            A: { shoot: 1, save: 1 },
+            B: { shoot: 1, save: 1 }
         };
 
+        // チーム名前
+        let teamNames = {
+            A: 'チーム A',
+            B: 'チーム B'
+        };
+
+        // DOMバインド用
+        let els = {};
+
+        // ページ読み込み時に実行
+        window.addEventListener('DOMContentLoaded', () => {
+            els = {
+                targetZones: document.querySelectorAll('.zone-cell'),
+                messageBox: document.getElementById('messageBox'),
+                btnConfirm: document.getElementById('btnConfirm'),
+                btnAction: document.getElementById('btnAction'),
+                btnReset: document.getElementById('btnReset'),
+                btnNewGame: document.getElementById('btnNewGame'),
+                scoreA: document.getElementById('scoreA'),
+                scoreB: document.getElementById('scoreB'),
+                historyA: document.getElementById('historyA'),
+                historyB: document.getElementById('historyB'),
+                roundDisplay: document.getElementById('roundDisplay'),
+                gkBody: document.getElementById('gkBody'),
+                kickerBody: document.getElementById('kickerBody'),
+                gkContainer: document.getElementById('goalkeeper'),
+                gkSvg: document.getElementById('gkSvg'),
+                ball: document.getElementById('ball'),
+                kickerDiv: document.getElementById('kicker'),
+                effectLayer: document.getElementById('effectLayer'),
+                effectText: document.getElementById('effectText'),
+                effectBg: document.getElementById('effectBg'),
+                btnSettings: document.getElementById('btnSettings'),
+                settingsModal: document.getElementById('settingsModal'),
+                btnDecRounds: document.getElementById('btnDecRounds'),
+                btnIncRounds: document.getElementById('btnIncRounds'),
+                settingRounds: document.getElementById('settingRounds'),
+                btnSaveSettings: document.getElementById('btnSaveSettings'),
+                btnResetData: document.getElementById('btnResetData'),
+                btnPromptReset: document.getElementById('btnPromptReset'),
+                resetConfirmModal: document.getElementById('resetConfirmModal'),
+                btnCancelReset: document.getElementById('btnCancelReset'),
+                btnExecuteReset: document.getElementById('btnExecuteReset')
+            };
+
+            loadGame();
+            setupEventListeners();
+        });
+
+        // ユーザーインタラクションで音源初期化
+        window.addEventListener('click', () => se.init(), { once: false });
+        window.addEventListener('touchstart', () => se.init(), { once: false });
+
         function saveGame() {
-            localStorage.setItem('pkGameStateV2', JSON.stringify(gameState));
+            const data = {
+                gameState,
+                superStock,
+                teamNames
+            };
+            localStorage.setItem('pkGameStateFull', JSON.stringify(data));
         }
 
         function loadGame() {
-            const saved = localStorage.getItem('pkGameStateV2');
+            const saved = localStorage.getItem('pkGameStateFull');
             if (saved) {
                 try {
-                    gameState = JSON.parse(saved);
-                    // マイグレーション (古いバージョンからの互換用)
-                    if(!gameState.teamNames) gameState.teamNames = { A: 'チーム A', B: 'チーム B' };
-                    if(!gameState.super) gameState.super = { A: { shootUsed: false, saveUsed: false }, B: { shootUsed: false, saveUsed: false } };
-                    if(!gameState.currentAction) gameState.currentAction = { superShoot: false, superSave: false };
+                    const parsed = JSON.parse(saved);
+                    gameState = parsed.gameState;
+                    superStock = parsed.superStock;
+                    teamNames = parsed.teamNames;
                 } catch(e) {
-                    console.error("Save data corrupted, resetting.");
-                    gameState = JSON.parse(JSON.stringify(defaultState));
+                    console.error("セーブデータのロードに失敗、初期化します");
+                    resetToDefault();
                 }
             } else {
-                // v1のデータを消す
-                localStorage.removeItem('pkGameState');
+                resetToDefault();
             }
+            
+            // チーム名のUI更新
+            document.getElementById('displayTeamA').textContent = teamNames.A;
+            document.getElementById('displayTeamB').textContent = teamNames.B;
+            document.getElementById('inputTeamA').value = teamNames.A;
+            document.getElementById('inputTeamB').value = teamNames.B;
+
             updateUI();
         }
 
-        function resetGame(fullReset = false) {
-            const currentMax = gameState.maxRounds;
-            const names = { ...gameState.teamNames };
+        function resetToDefault() {
             gameState = JSON.parse(JSON.stringify(defaultState));
-            if (!fullReset) {
-                gameState.maxRounds = currentMax;
-                gameState.teamNames = names; // チーム名は保持
-            }
-            saveGame();
-            resetVisuals();
-            updateUI();
+            superStock = {
+                A: { shoot: 1, save: 1 },
+                B: { shoot: 1, save: 1 }
+            };
+            teamNames = {
+                A: 'チーム A',
+                B: 'チーム B'
+            };
         }
-
-        // スーパートグル UI制御
-        els.chkSuper.addEventListener('change', (e) => {
-            if(e.target.checked) {
-                els.superActionLabelWrap.classList.add('super-active-wrap');
-            } else {
-                els.superActionLabelWrap.classList.remove('super-active-wrap');
-            }
-        });
 
         function updateUI() {
-            els.displayTeamA.textContent = gameState.teamNames.A;
-            els.displayTeamB.textContent = gameState.teamNames.B;
+            if (!els.scoreA) return; // DOM初期化前ガード
+
+            // スコアとラウンド
             els.scoreA.textContent = gameState.score.A;
             els.scoreB.textContent = gameState.score.B;
             
@@ -382,92 +1145,142 @@
             if (gameState.isSuddenDeath) roundText = `延長戦 ${gameState.currentRound}`;
             els.roundDisplay.textContent = roundText;
 
+            // 履歴描画
             renderHistory(els.historyA, gameState.history.A, gameState.attackingTeam === TEAM_A && gameState.currentPhase !== 'GAME_OVER');
             renderHistory(els.historyB, gameState.history.B, gameState.attackingTeam === TEAM_B && gameState.currentPhase !== 'GAME_OVER');
 
+            // 攻守とキャラクター色設定
             const defTeam = gameState.attackingTeam === TEAM_A ? TEAM_B : TEAM_A;
-            const atkName = gameState.teamNames[gameState.attackingTeam];
-            const defName = gameState.teamNames[defTeam];
-
             els.gkBody.setAttribute('fill', defTeam === TEAM_A ? TEAM_A_COLOR : TEAM_B_COLOR);
             els.kickerBody.setAttribute('fill', gameState.attackingTeam === TEAM_A ? TEAM_A_COLOR : TEAM_B_COLOR);
 
+            // 操作ボタン表示クリア
             els.btnConfirm.classList.add('hidden');
             els.btnAction.classList.add('hidden');
             els.btnReset.classList.add('hidden');
             els.btnNewGame.classList.add('hidden');
-            els.superActionContainer.classList.add('hidden');
-            els.chkSuper.checked = false; // 表示リセット
-            els.superActionLabelWrap.classList.remove('super-active-wrap');
             
+            // スーパー切り替えスイッチ初期非表示
+            document.getElementById('superToggle').classList.add('hidden');
+
+            // ターゲットグリッドの表示スタイルリセット
             els.targetZones.forEach(z => {
-                z.classList.remove('selectable', 'selected');
+                z.classList.remove('selectable', 'selected', 'hide-indicator', 'active');
+                z.onclick = null;
             });
             selectedZone = null;
             els.btnConfirm.disabled = true;
 
+            const atkName = teamNames[gameState.attackingTeam];
+            const defName = teamNames[defTeam];
+
             switch (gameState.currentPhase) {
-                case 'GK_SELECT':
-                    showMessage(`${defName}(GK) はボールが飛んでくる方向を予想してください。`, 'blue');
-                    els.btnConfirm.classList.remove('hidden');
-                    enableZoneSelection();
-                    if (!gameState.super[defTeam].saveUsed) {
-                        els.superActionContainer.classList.remove('hidden');
-                        els.superActionText.innerHTML = '🔥 <span class="text-yellow-300">スーパーSAVE</span> 発動！(1回限定)';
-                    }
-                    break;
                 case 'KICKER_SELECT':
-                    showMessage(`${atkName}(Kicker) は蹴る方向を決定してください。`, 'red');
+                    showMessage(`${atkName} (キッカー) はシュートする方向を決めてください。`, 'red');
                     els.btnConfirm.classList.remove('hidden');
-                    enableZoneSelection();
-                    if (!gameState.super[gameState.attackingTeam].shootUsed) {
-                        els.superActionContainer.classList.remove('hidden');
-                        els.superActionText.innerHTML = '🔥 <span class="text-yellow-300">スーパーSHOOT</span> 発動！(1回限定)';
-                    }
-                    break;
-                case 'READY_TO_KICK':
-                    let readyMsg = "両者決定！「勝負！」ボタンを押してください。";
-                    if (gameState.currentAction.superShoot && gameState.currentAction.superSave) {
-                        readyMsg = "🔥 激突！両チームがスーパー機能を発動！ 勝負！";
-                    } else if (gameState.currentAction.superShoot) {
-                        readyMsg = `🔥 ${atkName} がスーパーSHOOTを発動！ 勝負！`;
-                    } else if (gameState.currentAction.superSave) {
-                        readyMsg = `🔥 ${defName} がスーパーSAVEを発動！ 勝負！`;
-                    }
-                    showMessage(readyMsg, 'yellow');
                     
+                    // スーパーSHOOT可能ならトグルスイッチを表示
+                    if (superStock[gameState.attackingTeam].shoot > 0) {
+                        setupSuperToggle('shoot');
+                    }
+                    
+                    enableZoneSelection();
+                    break;
+                    
+                case 'GK_SELECT':
+                    showMessage(`${defName} (キーパー) は飛んでくる方向を予想してください。`, 'blue');
+                    els.btnConfirm.classList.remove('hidden');
+                    
+                    // スーパーSAVE可能ならトグルスイッチを表示
+                    if (superStock[defTeam].save > 0) {
+                        setupSuperToggle('save');
+                    }
+                    
+                    enableZoneSelection();
+                    break;
+                    
+                case 'READY_TO_KICK':
+                    let msg = `攻守決定！「勝負！」ボタンを押そう。`;
+                    if (gameState.selections.superShoot || gameState.selections.superSave) {
+                        msg = `🔥 激突！スーパー機能が宣言されました！`;
+                    }
+                    showMessage(msg, 'yellow');
                     els.btnAction.classList.remove('hidden');
                     els.btnAction.disabled = false;
-                    if(gameState.selections.gk !== null) {
-                        const gZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.gk}"]`);
-                        gZone.classList.add('selected');
+                    
+                    // 勝負前は「キーパーの選択位置」をインジケーターとして表示し続ける
+                    if (gameState.selections.gk !== null) {
+                        const gkSelectedCell = document.querySelector(`.zone-cell[data-pos="${gameState.selections.gk}"]`);
+                        if (gkSelectedCell) {
+                            gkSelectedCell.classList.add('selected');
+                        }
                     }
                     break;
-                case 'RESULT':
-                    break;
-                case 'GAME_OVER':
-                    let winnerText = "";
-                    if (gameState.score.A > gameState.score.B) winnerText = `${gameState.teamNames.A}の勝利！！`;
-                    else if (gameState.score.B > gameState.score.A) winnerText = `${gameState.teamNames.B}の勝利！！`;
-                    else winnerText = "引き分け";
                     
-                    showMessage(`試合終了！ ${winnerText}`, 'green');
+                case 'RESULT':
+                    // アニメーション中
+                    break;
+                    
+                case 'GAME_OVER':
+                    let winner = "";
+                    if (gameState.score.A > gameState.score.B) winner = teamNames.A;
+                    else if (gameState.score.B > gameState.score.A) winner = teamNames.B;
+                    
+                    if (winner) {
+                        showMessage(`🎉 試合終了！ 勝者は 【${winner}】 です！`, 'green');
+                    } else {
+                        showMessage(`試合終了！ 引き分け！`, 'green');
+                    }
                     els.btnNewGame.classList.remove('hidden');
                     break;
             }
         }
 
+        function setupSuperToggle(type) {
+            const toggleDiv = document.getElementById('superToggle');
+            const emoji = document.getElementById('superToggleEmoji');
+            const text = document.getElementById('superToggleText');
+            
+            toggleDiv.classList.remove('hidden');
+            
+            // 現在の選択状態に合わせてスイッチをセット
+            isSuperActive = false;
+            toggleDiv.classList.remove('active');
+
+            if (type === 'shoot') {
+                emoji.textContent = '🚀';
+                text.textContent = 'スーパーSHOOTを発動！(得点2倍)';
+            } else {
+                emoji.textContent = '🛡️';
+                text.textContent = 'スーパーSAVEを発動！(セーブで2点)';
+            }
+
+            toggleDiv.onclick = () => {
+                se.playClick();
+                isSuperActive = !isSuperActive;
+                if (isSuperActive) {
+                    toggleDiv.classList.add('active');
+                } else {
+                    toggleDiv.classList.remove('active');
+                }
+            };
+        }
+
         function showMessage(text, colorType) {
-            els.messageBox.innerHTML = text;
-            els.messageBox.className = 'pointer-events-auto p-2 md:p-3 rounded-xl shadow-lg text-center font-bold text-sm md:text-lg transition-transform duration-300 animate-pop border-4 leading-tight ';
-            if (colorType === 'blue') els.messageBox.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-900');
-            else if (colorType === 'red') els.messageBox.classList.add('bg-red-100', 'border-red-500', 'text-red-900');
-            else if (colorType === 'green') els.messageBox.classList.add('bg-green-100', 'border-green-500', 'text-green-900');
-            else els.messageBox.classList.add('bg-yellow-100', 'border-yellow-500', 'text-yellow-900');
+            const box = els.messageBox;
+            if (!box) return;
+            box.textContent = text;
+            box.className = 'msg-bubble';
+            
+            if (colorType === 'blue') box.classList.add('blue');
+            else if (colorType === 'red') box.classList.add('red');
+            else if (colorType === 'green') box.classList.add('green');
         }
 
         function renderHistory(container, history, isCurrentTurn) {
+            if (!container) return;
             container.innerHTML = '';
+            // 通常時表示される最小限のプレースホルダー数
             const maxDots = Math.max(gameState.maxRounds, history.length + (isCurrentTurn ? 1 : 0));
             
             for (let i = 0; i < maxDots; i++) {
@@ -475,10 +1288,13 @@
                 dot.className = 'score-dot';
                 
                 if (i < history.length) {
-                    const item = history[i];
-                    if (item && (item.result || item === true)) {
-                        dot.classList.add('goal');
-                        if (item.super) dot.innerHTML = '<span class="text-yellow-500 absolute scale-150 drop-shadow-md">★</span>';
+                    const res = history[i]; // { goal: bool, isSuperGoal: bool, isSuperSave: bool }
+                    if (res.goal) {
+                        if (res.isSuperGoal) {
+                            dot.classList.add('super-goal');
+                        } else {
+                            dot.classList.add('goal');
+                        }
                     } else {
                         dot.classList.add('miss');
                     }
@@ -491,390 +1307,580 @@
 
         function enableZoneSelection() {
             els.targetZones.forEach(zone => {
-                zone.classList.add('selectable');
+                zone.classList.add('active');
                 zone.onclick = () => {
+                    se.playClick();
                     els.targetZones.forEach(z => z.classList.remove('selected'));
                     zone.classList.add('selected');
                     selectedZone = parseInt(zone.dataset.pos);
                     els.btnConfirm.disabled = false;
-                    zone.classList.remove('animate-pop');
-                    void zone.offsetWidth;
-                    zone.classList.add('animate-pop');
                 };
             });
         }
 
-        els.btnConfirm.addEventListener('click', () => {
-            if (selectedZone === null) return;
-            const defTeam = gameState.attackingTeam === TEAM_A ? TEAM_B : TEAM_A;
+        // 決定ボタンイベント
+        window.addEventListener('DOMContentLoaded', () => {
+            els.btnConfirm.addEventListener('click', () => {
+                if (selectedZone === null) return;
+                se.playClick();
 
-            if (gameState.currentPhase === 'KICKER_SELECT') {
-                gameState.selections.kicker = selectedZone;
-                if (!gameState.super[gameState.attackingTeam].shootUsed) gameState.currentAction.superShoot = els.chkSuper.checked;
+                if (gameState.currentPhase === 'KICKER_SELECT') {
+                    // キッカーの選択を保持
+                    gameState.selections.kicker = selectedZone;
+                    gameState.selections.superShoot = isSuperActive;
 
-                showMessage("決定しました。...", 'red');
-                els.btnConfirm.disabled = true;
-                els.targetZones.forEach(z => z.classList.remove('selectable'));
-                els.superActionContainer.classList.add('hidden');
-                
-                setTimeout(() => {
-                    gameState.currentPhase = 'GK_SELECT';
-                    selectedZone = null;
+                    // スーパー機能発動時の回数消費
+                    if (isSuperActive) {
+                        superStock[gameState.attackingTeam].shoot = 0;
+                    }
+
+                    showMessage("キッカーが狙いを決定しました！", 'red');
+                    els.btnConfirm.disabled = true;
+                    
+                    // すべてのインジケーターを一時的に隠す
+                    els.targetZones.forEach(z => {
+                        z.classList.remove('active');
+                        z.classList.add('hide-indicator');
+                    });
+                    
+                    // 1秒キープして次に進む
+                    setTimeout(() => {
+                        gameState.currentPhase = 'GK_SELECT';
+                        selectedZone = null;
+                        saveGame();
+                        updateUI();
+                    }, 1000);
+
+                } else if (gameState.currentPhase === 'GK_SELECT') {
+                    const defTeam = gameState.attackingTeam === TEAM_A ? TEAM_B : TEAM_A;
+                    gameState.selections.gk = selectedZone;
+                    gameState.selections.superSave = isSuperActive;
+
+                    // スーパー機能発動時の回数消費
+                    if (isSuperActive) {
+                        superStock[defTeam].save = 0;
+                    }
+
+                    gameState.currentPhase = 'READY_TO_KICK';
                     saveGame();
                     updateUI();
-                }, 1000);
+                }
+            });
 
-            } else if (gameState.currentPhase === 'GK_SELECT') {
-                gameState.selections.gk = selectedZone;
-                if (!gameState.super[defTeam].saveUsed) gameState.currentAction.superSave = els.chkSuper.checked;
+            // 勝負！ボタンイベント
+            els.btnAction.addEventListener('click', () => {
+                se.playClick();
+                els.btnAction.disabled = true;
+                gameState.currentPhase = 'RESULT';
                 
-                gameState.currentPhase = 'READY_TO_KICK';
-                saveGame();
-                updateUI();
-            }
-        });
-
-        els.btnAction.addEventListener('click', () => {
-            els.btnAction.disabled = true;
-            gameState.currentPhase = 'RESULT';
-            els.effectLayer.classList.remove('hidden');
-            els.effectLayer.style.opacity = '1';
-            els.effectBg.className = 'absolute inset-0'; 
-            
-            const playShoot = () => {
-                els.effectText.innerHTML = 'SHOOT!!';
-                els.effectText.style.animation = ''; 
-                els.effectText.className = 'text-6xl md:text-9xl font-black italic relative z-10 text-red-500 flash-text animate-pop';
-                els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.7)'; 
-                els.effectLayer.style.transition = 'opacity 0.3s'; 
+                // 演出画面準備
+                const layer = els.effectLayer;
+                const bg = els.effectBg;
+                const txt = els.effectText;
                 
-                setTimeout(() => {
-                    els.effectLayer.style.opacity = '0';
+                layer.classList.add('active');
+                layer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                bg.style.background = 'none';
+                txt.className = 'effect-title';
+                
+                // シュートのアニメーション処理を実行する関数
+                const startShootAnimation = () => {
+                    se.playWhistle();
+                    txt.textContent = 'SHOOT!!';
+                    txt.style.color = '#ef4444';
+                    txt.style.animation = 'text-zoom-in-bounce 0.5s ease forwards';
+                    
                     setTimeout(() => {
-                        els.effectLayer.classList.add('hidden');
-                        els.effectText.innerHTML = '';
-                        executeAnimation();
-                    }, 300);
-                }, 600);
-            };
+                        layer.classList.remove('active');
+                        txt.textContent = '';
+                        txt.style.animation = '';
+                        executeMainAnimation(); // キャラ＆ボール移動のアニメーション開始
+                    }, 700);
+                };
 
-            // ランダム演出 (10パターン)
-            const pattern = Math.floor(Math.random() * 10);
-            switch(pattern) {
-                case 0:
-                    showMessage("息を呑む瞬間...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.7)'; els.effectText.innerHTML = 'READY...'; els.effectText.className = 'text-5xl md:text-7xl font-bold relative z-10 text-white tracking-widest'; els.effectText.style.animation = 'heartbeat 1s ease-in-out infinite'; setTimeout(playShoot, 1800); break;
-                case 1:
-                    showMessage("運命のカウントダウン...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.85)'; els.effectText.className = 'text-8xl md:text-9xl font-black relative z-10 text-white'; let count = 3; els.effectText.innerHTML = count; els.effectText.style.animation = 'pop 0.5s ease-out'; const timer1 = setInterval(() => { count--; if(count > 0) { els.effectText.innerHTML = count; els.effectText.style.animation = 'none'; void els.effectText.offsetWidth; els.effectText.style.animation = 'pop 0.5s ease-out'; } else { clearInterval(timer1); playShoot(); } }, 800); break;
-                case 2:
-                    showMessage("極限の集中...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.9)'; els.effectText.className = 'text-4xl md:text-6xl font-bold relative z-10 text-white'; els.effectText.style.animation = 'slow-zoom-in 1.5s ease-out'; els.effectText.innerHTML = '静寂...'; setTimeout(() => { els.effectText.innerHTML = '集中...'; els.effectText.style.animation = 'none'; void els.effectText.offsetWidth; els.effectText.style.animation = 'slow-zoom-in 1.2s ease-out'; setTimeout(playShoot, 1200); }, 1500); break;
-                case 3:
-                    showMessage("スタジアムの地鳴り...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.7)'; els.effectText.className = 'text-5xl md:text-7xl font-black italic relative z-10 text-white'; els.effectText.innerHTML = 'PRESSURE'; els.effectText.style.animation = 'shake-intense 0.5s infinite'; setTimeout(playShoot, 1500); break;
-                case 4:
-                    showMessage("高鳴る鼓動...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.7)'; els.effectText.className = 'text-5xl md:text-7xl font-bold relative z-10 text-white'; els.effectText.innerHTML = 'ドクン...'; els.effectText.style.animation = 'fast-heartbeat 0.8s infinite'; setTimeout(() => { els.effectText.style.animation = 'fast-heartbeat 0.4s infinite'; setTimeout(() => { els.effectText.style.animation = 'fast-heartbeat 0.2s infinite'; setTimeout(playShoot, 600); }, 800); }, 800); break;
-                case 5:
-                    showMessage("...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,1)'; els.effectText.innerHTML = ''; setTimeout(playShoot, 1500); break;
-                case 6:
-                    showMessage("狂気のプレッシャー...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(30,0,0,0.8)'; els.effectText.className = 'text-6xl md:text-8xl font-black relative z-10 text-white tracking-widest'; els.effectText.innerHTML = 'WARNING'; els.effectText.style.animation = 'glitch-flash 0.3s infinite'; setTimeout(playShoot, 1600); break;
-                case 7:
-                    showMessage("狙いを定めろ...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.85)'; els.effectText.className = 'text-4xl md:text-6xl font-bold relative z-10 text-green-400'; els.effectText.innerHTML = 'TARGET LOCKED'; els.effectText.style.animation = 'letter-spacing-shrink 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards'; setTimeout(playShoot, 1800); break;
-                case 8:
-                    showMessage("血をたぎらせろ...", 'yellow'); els.effectLayer.style.transition = 'background-color 2s ease-in'; els.effectLayer.style.backgroundColor = 'rgba(150, 0, 0, 0.9)'; els.effectText.className = 'text-5xl md:text-7xl font-bold relative z-10 text-white'; els.effectText.innerHTML = 'FIGHT...'; setTimeout(() => { els.effectLayer.style.transition = 'opacity 0.3s'; playShoot(); }, 2000); break;
-                case 9:
-                    showMessage("パワーチャージ...", 'yellow'); els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.8)'; els.effectText.className = 'text-4xl md:text-6xl font-bold relative z-10 text-yellow-400'; let charge = 0; els.effectText.innerHTML = 'CHARGE 0%'; const timer2 = setInterval(() => { charge += 20; els.effectText.innerHTML = `CHARGE ${charge}%`; if(charge >= 100) { clearInterval(timer2); els.effectText.classList.add('text-red-500'); els.effectText.innerHTML = 'MAX!!'; els.effectText.style.animation = 'pop 0.3s ease-out'; setTimeout(playShoot, 500); } }, 300); break;
-            }
+                // 10パターンの緊張感煽り演出
+                const pattern = Math.floor(Math.random() * 10);
+                
+                switch(pattern) {
+                    case 0:
+                        showMessage("息を呑む瞬間...", 'yellow');
+                        txt.textContent = 'READY...';
+                        txt.style.color = '#ffffff';
+                        
+                        let hbCount = 0;
+                        const hbTimer = setInterval(() => {
+                            se.playHeartbeat(1.1);
+                            hbCount++;
+                            if(hbCount >= 2) clearInterval(hbTimer);
+                        }, 800);
+                        
+                        setTimeout(startShootAnimation, 1800);
+                        break;
+                        
+                    case 1:
+                        showMessage("カウントダウン...", 'yellow');
+                        let count = 3;
+                        txt.textContent = count;
+                        txt.style.color = '#ffffff';
+                        se.playHeartbeat();
+                        
+                        const cdTimer = setInterval(() => {
+                            count--;
+                            if (count > 0) {
+                                se.playHeartbeat(1.3);
+                                txt.textContent = count;
+                            } else {
+                                clearInterval(cdTimer);
+                                startShootAnimation();
+                            }
+                        }, 600);
+                        break;
+                        
+                    case 2:
+                        showMessage("スタジアムのプレッシャー...", 'yellow');
+                        txt.textContent = 'PRESSURE';
+                        txt.style.color = '#f59e0b';
+                        
+                        let pCount = 0;
+                        const pTimer = setInterval(() => {
+                            se.playHeartbeat(0.9);
+                            pCount++;
+                            if(pCount >= 3) clearInterval(pTimer);
+                        }, 400);
+                        
+                        setTimeout(startShootAnimation, 1400);
+                        break;
+                        
+                    case 3:
+                        showMessage("極限の集中...", 'yellow');
+                        txt.textContent = '静寂...';
+                        txt.style.color = '#cbd5e1';
+                        se.playHeartbeat(2.0);
+                        
+                        setTimeout(() => {
+                            txt.textContent = '狙え！';
+                            se.playHeartbeat(1.2);
+                            setTimeout(startShootAnimation, 1000);
+                        }, 1200);
+                        break;
+                        
+                    case 4:
+                        showMessage("心臓の鼓動が高鳴る...", 'yellow');
+                        txt.textContent = 'ドクン...';
+                        txt.style.color = '#ef4444';
+                        
+                        se.playHeartbeat(0.6);
+                        setTimeout(() => {
+                            se.playHeartbeat(0.4);
+                            setTimeout(startShootAnimation, 600);
+                        }, 600);
+                        break;
+                        
+                    case 5:
+                        showMessage("嵐の前の静けさ", 'yellow');
+                        txt.textContent = '...';
+                        txt.style.color = '#ffffff';
+                        se.playHeartbeat(2.2);
+                        setTimeout(startShootAnimation, 1300);
+                        break;
+                        
+                    case 6:
+                        showMessage("視線が交差する", 'yellow');
+                        txt.textContent = 'VS';
+                        txt.style.color = '#f59e0b';
+                        se.playHeartbeat(1.5);
+                        setTimeout(startShootAnimation, 1200);
+                        break;
+                        
+                    case 7:
+                        showMessage("勝利への一歩", 'yellow');
+                        txt.textContent = 'DETERMINATION';
+                        txt.style.color = '#10b981';
+                        se.playHeartbeat(1.0);
+                        setTimeout(startShootAnimation, 1500);
+                        break;
+                        
+                    case 8:
+                        showMessage("ターゲットを捕らえろ！", 'yellow');
+                        txt.textContent = 'TARGET';
+                        txt.style.color = '#3b82f6';
+                        se.playHeartbeat(1.4);
+                        setTimeout(startShootAnimation, 1400);
+                        break;
+                        
+                    case 9:
+                        showMessage("一撃必殺", 'yellow');
+                        txt.textContent = 'POWER';
+                        txt.style.color = '#a855f7';
+                        se.playHeartbeat(0.8);
+                        setTimeout(startShootAnimation, 1100);
+                        break;
+                }
+            });
         });
 
-        function executeAnimation() {
-            const kZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.kicker}"]`);
-            const gZone = document.querySelector(`.target-zone[data-pos="${gameState.selections.gk}"]`);
+        function executeMainAnimation() {
+            const kZone = document.querySelector(`.zone-cell[data-pos="${gameState.selections.kicker}"]`);
+            const gZone = document.querySelector(`.zone-cell[data-pos="${gameState.selections.gk}"]`);
             
+            // 親要素の矩形を基準に正確な移動距離を算出
             const kRect = kZone.getBoundingClientRect();
             const gRect = gZone.getBoundingClientRect();
-            const ballRect = els.ball.getBoundingClientRect();
-            const gkRect = els.gkContainer.getBoundingClientRect();
-
+            
+            const ball = els.ball;
+            const ballRect = ball.getBoundingClientRect();
+            
+            const gk = els.gkContainer;
+            const gkRect = gk.getBoundingClientRect();
+            
+            // ボールの移動先計算
             const ballTargetX = kRect.left + kRect.width / 2;
             const ballTargetY = kRect.top + kRect.height / 2;
             const ballDx = ballTargetX - (ballRect.left + ballRect.width / 2);
             const ballDy = ballTargetY - (ballRect.top + ballRect.height / 2);
 
+            // キーパーの移動先計算
             const gkTargetX = gRect.left + gRect.width / 2;
             const gkTargetY = gRect.top + gRect.height / 2;
             const gkDx = gkTargetX - (gkRect.left + gkRect.width / 2);
             const gkDy = gkTargetY - (gkRect.top + gkRect.height / 2);
 
-            els.kickerDiv.style.transform = "translateX(calc(-50% - 10px)) translateY(-10px) scale(1.1) rotate(-10deg)";
+            // キッカーが前に踏み出すアクション
+            const kicker = els.kickerDiv;
+            kicker.style.transform = "translateX(calc(-50% - 15px)) translateY(-15px) scale(1.1) rotate(-8deg)";
             
-            // スーパー発動時は動きを速くする
-            const speed = (gameState.currentAction.superShoot || gameState.currentAction.superSave) ? 0.3 : 0.5;
-            els.ball.style.transition = `transform ${speed}s cubic-bezier(0.1, 0.8, 0.3, 1)`;
-            els.gkContainer.style.transition = `transform ${speed-0.1}s ease-out`;
-            els.gkSvg.style.transition = `transform ${speed-0.1}s ease-out`;
-
             setTimeout(() => {
-                els.ball.style.transform = `translateX(calc(-50% + ${ballDx}px)) translateY(${ballDy}px) scale(0.5) rotate(720deg)`;
-                els.gkContainer.style.transform = `translateX(calc(-50% + ${gkDx}px)) translateY(${gkDy}px)`;
+                se.playKick(); // キックインパクト音
                 
-                let rot = 0;
-                const gPosData = POSITIONS[gameState.selections.gk];
-                if(gPosData.left === '15%') rot = -45;
-                if(gPosData.left === '85%') rot = 45;
-                let scale = (gPosData.top === '15%') ? 0.8 : 0.9;
-                els.gkSvg.style.transform = `rotate(${rot}deg) scale(${scale})`;
+                // ボールとGKのアニメーションプロパティセット
+                ball.style.transition = "transform 0.5s cubic-bezier(0.1, 0.8, 0.3, 1)";
+                gk.style.transition = "transform 0.4s ease-out";
+                els.gkSvg.style.transition = "transform 0.4s ease-out";
 
+                // ボールの回転＆縮小移動 (ゴール奥へ行く感覚)
+                ball.style.transform = `translateX(calc(-50% + ${ballDx}px)) translateY(${ballDy}px) scale(0.55) rotate(720deg)`;
+                
+                // キーパーのジャンプ（ダイブ移動）
+                gk.style.transform = `translateX(calc(-50% + ${gkDx}px)) translateY(${gkDy}px)`;
+                
+                // 飛び込んだ方向に応じてキーパーSVG自体を傾ける
+                let rotation = 0;
+                const gZoneInfo = POSITIONS[gameState.selections.gk];
+                if (gZoneInfo.left === '15%') rotation = -45; // 左ダイブ
+                if (gZoneInfo.left === '85%') rotation = 45;  // 右ダイブ
+                
+                // 飛び込む高さ
+                let scale = (gZoneInfo.top === '15%') ? 0.85 : 0.95;
+                els.gkSvg.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+
+                // 衝突・判定完了
                 setTimeout(() => {
                     const isGoal = gameState.selections.kicker !== gameState.selections.gk;
-                    showEffect(isGoal);
-                    processResult(isGoal);
-                }, speed * 1000 + 50);
+                    showEffectAndResults(isGoal);
+                }, 550);
 
-            }, 50);
+            }, 250);
         }
 
-        function showEffect(isGoal) {
-            els.effectLayer.classList.remove('hidden');
-            els.effectLayer.style.opacity = '1';
-            els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        function showEffectAndResults(isGoal) {
+            const layer = els.effectLayer;
+            const bg = els.effectBg;
+            const txt = els.effectText;
             
-            els.effectBg.className = 'absolute inset-0';
-            els.effectText.className = 'text-5xl md:text-8xl font-black italic relative z-10 text-center leading-tight';
-            els.effectText.style.animation = ''; 
-            void els.effectText.offsetWidth; 
+            layer.classList.add('active');
+            layer.style.backgroundColor = 'rgba(0, 0, 0, 0.65)';
+            
+            txt.className = 'effect-title';
+            bg.className = 'effect-bg';
+            
+            // リフロー発生によりアニメーションを初期化
+            void txt.offsetWidth;
+
+            const isSuperActiveShoot = gameState.selections.superShoot;
+            const isSuperActiveSave = gameState.selections.superSave;
 
             if (isGoal) {
-                if(gameState.currentAction.superShoot) {
-                    els.effectText.innerHTML = 'SUPER GOAL!!<br><span class="text-4xl md:text-6xl text-yellow-300 drop-shadow-lg">+2 POINTS</span>';
+                se.playGoal();
+                if (isSuperActiveShoot) {
+                    txt.textContent = 'SUPER GOAL!!!\n(+2得点)';
+                    txt.style.color = '#fbbf24';
+                    bg.style.background = 'repeating-conic-gradient(from 0deg, #f59e0b 0deg 15deg, #d97706 15deg 30deg)';
                 } else {
-                    els.effectText.innerHTML = 'GOAL!!';
+                    txt.textContent = 'GOAL!!';
+                    txt.style.color = '#fde047';
+                    bg.style.background = 'repeating-conic-gradient(from 0deg, #fcd34d 0deg 20deg, #fbbf24 20deg 40deg)';
                 }
-                els.effectText.classList.add('effect-goal-text');
-                els.effectBg.classList.add('effect-goal-bg');
+                bg.style.animation = 'sunburst-spin 8s linear infinite';
             } else {
-                if(gameState.currentAction.superSave) {
-                    els.effectText.innerHTML = 'SUPER SAVE!!<br><span class="text-4xl md:text-6xl text-yellow-300 drop-shadow-lg">+2 POINTS</span>';
+                se.playSave();
+                if (isSuperActiveSave) {
+                    txt.textContent = 'SUPER SAVE!!!\n(GK側 +2得点)';
+                    txt.style.color = '#ffffff';
+                    bg.style.background = 'repeating-conic-gradient(from 0deg, #4f46e5 0deg 15deg, #3730a3 15deg 30deg)';
                 } else {
-                    els.effectText.innerHTML = 'SAVE!!';
+                    txt.textContent = 'SAVE!!';
+                    txt.style.color = '#f87171';
+                    bg.style.background = 'repeating-conic-gradient(from 0deg, #ef4444 0deg 20deg, #dc2626 20deg 40deg)';
                 }
-                els.effectText.classList.add('effect-save-text');
-                els.effectBg.classList.add('effect-save-bg');
+                bg.style.animation = 'sunburst-spin 4s linear infinite reverse';
             }
 
+            // 得点の更新
+            const atkTeam = gameState.attackingTeam;
+            const defTeam = atkTeam === TEAM_A ? TEAM_B : TEAM_A;
+            
+            let earnedPoints = 0;
+            if (isGoal) {
+                earnedPoints = isSuperActiveShoot ? 2 : 1;
+                gameState.score[atkTeam] += earnedPoints;
+                gameState.history[atkTeam].push({ goal: true, isSuperGoal: isSuperActiveShoot, isSuperSave: false });
+            } else {
+                if (isSuperActiveSave) {
+                    earnedPoints = 2;
+                    gameState.score[defTeam] += earnedPoints;
+                }
+                gameState.history[atkTeam].push({ goal: false, isSuperGoal: false, isSuperSave: isSuperActiveSave });
+            }
+
+            saveGame();
+            updateUI();
+
+            // 演出を閉じた後、勝敗判定へ
             setTimeout(() => {
-                els.effectLayer.style.opacity = '0';
+                layer.classList.remove('active');
                 setTimeout(() => {
-                    els.effectLayer.classList.add('hidden');
-                    els.effectBg.className = 'absolute inset-0';
-                    els.effectText.className = 'text-5xl md:text-8xl font-black italic relative z-10 text-center leading-tight';
+                    checkRoundEndConditions();
                 }, 300);
             }, 2500);
         }
 
-        function processResult(isGoal) {
-            const atkTeam = gameState.attackingTeam;
-            const defTeam = atkTeam === TEAM_A ? TEAM_B : TEAM_A;
-            
-            if (isGoal) {
-                const pts = gameState.currentAction.superShoot ? 2 : 1;
-                gameState.score[atkTeam] += pts;
-                gameState.history[atkTeam].push({ result: true, super: gameState.currentAction.superShoot });
-            } else {
-                const pts = gameState.currentAction.superSave ? 2 : 0;
-                gameState.score[defTeam] += pts;
-                gameState.history[atkTeam].push({ result: false, super: gameState.currentAction.superSave });
-            }
-            
-            // 使用フラグ確定
-            if(gameState.currentAction.superShoot) gameState.super[atkTeam].shootUsed = true;
-            if(gameState.currentAction.superSave) gameState.super[defTeam].saveUsed = true;
-
-            updateUI();
-
-            setTimeout(() => {
-                checkWinCondition();
-            }, 2800); 
-        }
-
-        function checkWinCondition() {
+        function checkRoundEndConditions() {
             const histA = gameState.history.A.length;
             const histB = gameState.history.B.length;
             const scoreA = gameState.score.A;
             const scoreB = gameState.score.B;
             
-            let gameEnded = false;
+            let isGameOver = false;
 
             if (!gameState.isSuddenDeath) {
-                const remA = gameState.maxRounds - histA;
-                const remB = gameState.maxRounds - histB;
+                const remainsA = gameState.maxRounds - histA;
+                const remainsB = gameState.maxRounds - histB;
 
-                // 最大獲得可能ポイントによる早期終了判定
-                let maxExA = remA;
-                if (!gameState.super.A.shootUsed && remA > 0) maxExA += 1;
-                if (!gameState.super.A.saveUsed && remB > 0) maxExA += 2; 
-                
-                let maxExB = remB;
-                if (!gameState.super.B.shootUsed && remB > 0) maxExB += 1;
-                if (!gameState.super.B.saveUsed && remA > 0) maxExB += 2;
+                // 早期決着の可能性判定 (数学的な逆転不可能判定)
+                if (scoreA > scoreB + remainsB) {
+                    isGameOver = true;
+                } else if (scoreB > scoreA + remainsA) {
+                    isGameOver = true;
+                }
 
-                if (scoreA > scoreB + maxExB) gameEnded = true;
-                if (scoreB > scoreA + maxExA) gameEnded = true;
-
-                // 規定ラウンド終了時
+                // 規定ラウンド全て蹴り終えた場合
                 if (histA === gameState.maxRounds && histB === gameState.maxRounds) {
                     if (scoreA !== scoreB) {
-                        gameEnded = true;
+                        isGameOver = true;
                     } else {
+                        // 延長戦(サドンデス)に突入
                         gameState.isSuddenDeath = true;
+                        se.playWhistle();
                         showMessage("同点！サドンデス(延長戦)へ突入します！", 'yellow');
                     }
                 }
             } else {
+                // サドンデス：お互いに同回数蹴り終えた段階で点差がつけば即終了
                 if (histA === histB && scoreA !== scoreB) {
-                    gameEnded = true;
+                    isGameOver = true;
                 }
             }
 
-            if (gameEnded) {
+            if (isGameOver) {
                 gameState.currentPhase = 'GAME_OVER';
                 saveGame();
                 updateUI();
-                
-                setTimeout(() => { showWinEffect(scoreA, scoreB); }, 500);
+                se.playVictory();
+                triggerGrandWinnerEffect();
             } else {
                 els.btnReset.classList.remove('hidden');
-                showMessage("結果を確認したら次へ進んでください", 'blue');
+                showMessage("結果を確認したら「次のラウンドへ」を押してください", 'blue');
             }
         }
 
-        function createConfetti() {
-            els.confettiContainer.innerHTML = '';
-            els.confettiContainer.classList.remove('hidden');
-            const colors = ['#fcd34d', '#ef4444', '#3b82f6', '#10b981', '#ffffff'];
-            for(let i=0; i<100; i++) {
-                let conf = document.createElement('div');
-                conf.classList.add('confetti');
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                conf.style.animationDelay = (Math.random() * 2) + 's';
-                els.confettiContainer.appendChild(conf);
-            }
-        }
+        function triggerGrandWinnerEffect() {
+            const layer = els.effectLayer;
+            const bg = els.effectBg;
+            const txt = els.effectText;
+            
+            layer.classList.add('active');
+            layer.style.backgroundColor = 'rgba(17, 24, 39, 0.95)'; // 黒に近いダーク
+            
+            const scoreA = gameState.score.A;
+            const scoreB = gameState.score.B;
+            const winnerTeam = scoreA > scoreB ? TEAM_A : TEAM_B;
+            const winnerName = teamNames[winnerTeam];
+            const winnerColor = winnerTeam === TEAM_A ? '#ef4444' : '#3b82f6';
+            
+            // ド派手なコニックグラデーションの高速回転バックグラウンド
+            bg.className = 'effect-bg';
+            bg.style.background = `repeating-conic-gradient(from 0deg, ${winnerColor} 0deg 10deg, #facc15 10deg 20deg, #111827 20deg 30deg)`;
+            bg.style.animation = 'sunburst-spin 5s linear infinite';
+            bg.style.opacity = '0.4';
 
-        function showWinEffect(scoreA, scoreB) {
-            els.effectLayer.classList.remove('hidden');
-            els.effectLayer.style.opacity = '1';
-            els.effectLayer.style.backgroundColor = 'rgba(0,0,0,0.85)';
-            els.effectBg.className = 'absolute inset-0'; 
-            
-            const winner = scoreA > scoreB ? gameState.teamNames.A : gameState.teamNames.B;
-            const colorClass = scoreA > scoreB ? "text-red-500" : "text-blue-500";
-            const bgGradient = scoreA > scoreB ? 
-                "repeating-conic-gradient(from 0deg, #7f1d1d 0deg 20deg, #991b1b 20deg 40deg)" : 
-                "repeating-conic-gradient(from 0deg, #1e3a8a 0deg 20deg, #1e40af 20deg 40deg)";
-            
-            els.effectBg.style.background = bgGradient;
-            els.effectBg.style.animation = "sunburst-spin 15s linear infinite";
-            els.effectBg.style.opacity = "0.5";
-            
-            els.effectText.innerHTML = `
-                <span class="text-3xl md:text-5xl text-white block mb-2 font-bold tracking-widest drop-shadow-md">WINNER</span>
-                <span class="${colorClass} text-6xl md:text-9xl drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] flash-text">${winner}</span>
+            txt.innerHTML = `
+                <div style="font-size: 1.5rem; color: #fff; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">🏆 GRAND CHAMPION 🏆</div>
+                <div style="font-size: 3.5rem; font-weight: 900; color: #ffffff; text-shadow: 0 0 20px ${winnerColor}, 0 0 40px #facc15;">
+                    ${winnerName}
+                </div>
+                <div style="font-size: 1.8rem; color: #fef08a; margin-top: 12px; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">
+                    スコア: ${scoreA} - ${scoreB}
+                </div>
+                <div style="font-size: 0.9rem; color: #9ca3af; margin-top: 30px; font-style: normal; font-weight: normal; cursor: pointer; text-decoration: underline;">
+                    画面をタップして閉じる
+                </div>
             `;
-            els.effectText.className = "text-center font-black italic relative z-10 effect-win-text break-words px-4";
+            txt.className = '';
             
-            createConfetti();
-            
-            els.effectLayer.style.pointerEvents = "auto";
-            els.effectLayer.onclick = () => {
-                els.effectLayer.style.opacity = '0';
-                setTimeout(() => {
-                    els.effectLayer.classList.add('hidden');
-                    els.effectLayer.style.pointerEvents = "none";
-                    els.confettiContainer.classList.add('hidden');
-                }, 300);
+            layer.onclick = () => {
+                se.playClick();
+                layer.classList.remove('active');
+                layer.onclick = null;
+                txt.innerHTML = ''; // クリア
             };
         }
 
-        els.btnReset.addEventListener('click', () => {
-            if (gameState.attackingTeam === TEAM_A) {
-                gameState.attackingTeam = TEAM_B;
-            } else {
-                gameState.attackingTeam = TEAM_A;
-                gameState.currentRound++;
-            }
-            gameState.selections = { gk: null, kicker: null };
-            gameState.currentAction = { superShoot: false, superSave: false };
-            gameState.currentPhase = 'KICKER_SELECT';
-            saveGame();
-            resetVisuals();
-            updateUI();
-        });
-
-        els.btnNewGame.addEventListener('click', () => { resetGame(false); });
-
         function resetVisuals() {
-            els.ball.style.transition = "none"; els.ball.style.transform = ""; 
-            els.gkContainer.style.transition = "none"; els.gkContainer.style.transform = ""; 
-            els.gkSvg.style.transition = "none"; els.gkSvg.style.transform = "";
-            els.kickerDiv.style.transform = ""; 
-            void els.ball.offsetWidth; void els.gkContainer.offsetWidth;
+            const ball = els.ball;
+            const gk = els.gkContainer;
+            const kicker = els.kickerDiv;
+            
+            // アニメーションを解除して初期配置へ戻す
+            ball.style.transition = "none";
+            ball.style.transform = "translateX(-50%)";
+            
+            gk.style.transition = "none";
+            gk.style.transform = "translateX(-50%)";
+            
+            els.gkSvg.style.transition = "none";
+            els.gkSvg.style.transform = "none";
+            
+            kicker.style.transform = "translateX(-50%)";
+
+            // リフロー発生させて設定を適用
+            void ball.offsetWidth;
+            void gk.offsetWidth;
+
             els.targetZones.forEach(z => z.classList.remove('selected'));
         }
 
-        els.btnSettings.addEventListener('click', () => {
-            els.settingRounds.textContent = gameState.maxRounds;
-            els.settingTeamA.value = gameState.teamNames.A;
-            els.settingTeamB.value = gameState.teamNames.B;
-            els.settingsModal.classList.remove('hidden');
-        });
+        function setupEventListeners() {
+            // 次のラウンドへ進む処理
+            els.btnReset.addEventListener('click', () => {
+                se.playWhistle();
 
-        els.btnDecRounds.addEventListener('click', () => {
-            let r = parseInt(els.settingRounds.textContent);
-            if (r > 1) els.settingRounds.textContent = r - 1;
-        });
+                // 攻守変更
+                if (gameState.attackingTeam === TEAM_A) {
+                    gameState.attackingTeam = TEAM_B;
+                } else {
+                    gameState.attackingTeam = TEAM_A;
+                    gameState.currentRound++;
+                }
 
-        els.btnIncRounds.addEventListener('click', () => {
-            let r = parseInt(els.settingRounds.textContent);
-            if (r < 10) els.settingRounds.textContent = r + 1;
-        });
+                gameState.selections = { gk: null, kicker: null, superShoot: false, superSave: false };
+                gameState.currentPhase = 'KICKER_SELECT';
+                saveGame();
+                resetVisuals();
+                updateUI();
+            });
 
-        els.btnSaveSettings.addEventListener('click', () => {
-            gameState.maxRounds = parseInt(els.settingRounds.textContent);
-            gameState.teamNames.A = els.settingTeamA.value.trim() || 'チーム A';
-            gameState.teamNames.B = els.settingTeamB.value.trim() || 'チーム B';
+            // 新しいゲームをスタート
+            els.btnNewGame.addEventListener('click', () => {
+                se.playClick();
+                resetGame(false);
+            });
+
+            // 設定モーダル
+            els.btnSettings.addEventListener('click', () => {
+                se.playClick();
+                document.getElementById('inputTeamA').value = teamNames.A;
+                document.getElementById('inputTeamB').value = teamNames.B;
+                document.getElementById('settingRounds').textContent = gameState.maxRounds;
+                document.getElementById('settingsModal').classList.remove('hidden');
+            });
+
+            document.getElementById('btnDecRounds').addEventListener('click', () => {
+                se.playClick();
+                let r = parseInt(document.getElementById('settingRounds').textContent);
+                if (r > 1) document.getElementById('settingRounds').textContent = r - 1;
+            });
+
+            document.getElementById('btnIncRounds').addEventListener('click', () => {
+                se.playClick();
+                let r = parseInt(document.getElementById('settingRounds').textContent);
+                if (r < 15) document.getElementById('settingRounds').textContent = r + 1;
+            });
+
+            document.getElementById('btnSaveSettings').addEventListener('click', () => {
+                se.playClick();
+                
+                // チーム名
+                const inputA = document.getElementById('inputTeamA').value.trim();
+                const inputB = document.getElementById('inputTeamB').value.trim();
+                teamNames.A = inputA || 'チーム A';
+                teamNames.B = inputB || 'チーム B';
+                
+                // 設定ラウンド
+                gameState.maxRounds = parseInt(document.getElementById('settingRounds').textContent);
+                
+                // 画面適用
+                document.getElementById('displayTeamA').textContent = teamNames.A;
+                document.getElementById('displayTeamB').textContent = teamNames.B;
+
+                saveGame();
+                updateUI();
+                document.getElementById('settingsModal').classList.add('hidden');
+            });
+
+            document.getElementById('btnResetData').addEventListener('click', () => {
+                se.playClick();
+                document.getElementById('settingsModal').classList.add('hidden');
+                document.getElementById('resetConfirmModal').classList.remove('hidden');
+            });
+
+            // リセットモーダル
+            els.btnPromptReset.addEventListener('click', () => {
+                se.playClick();
+                document.getElementById('resetConfirmModal').classList.remove('hidden');
+            });
+
+            document.getElementById('btnCancelReset').addEventListener('click', () => {
+                se.playClick();
+                document.getElementById('resetConfirmModal').classList.add('hidden');
+            });
+
+            document.getElementById('btnExecuteReset').addEventListener('click', () => {
+                se.playClick();
+                localStorage.removeItem('pkGameStateFull');
+                resetToDefault();
+                resetVisuals();
+                updateUI();
+                
+                // 表示同期
+                document.getElementById('displayTeamA').textContent = teamNames.A;
+                document.getElementById('displayTeamB').textContent = teamNames.B;
+                document.getElementById('inputTeamA').value = teamNames.A;
+                document.getElementById('inputTeamB').value = teamNames.B;
+
+                document.getElementById('resetConfirmModal').classList.add('hidden');
+            });
+        }
+
+        function resetGame(fullReset = false) {
+            const currentMax = gameState.maxRounds;
+            gameState = JSON.parse(JSON.stringify(defaultState));
+            if (!fullReset) {
+                gameState.maxRounds = currentMax;
+            }
             saveGame();
-            updateUI(); 
-            els.settingsModal.classList.add('hidden');
-        });
-
-        els.btnResetData.addEventListener('click', () => {
-            els.settingsModal.classList.add('hidden');
-            els.resetConfirmModal.classList.remove('hidden');
-        });
-
-        els.btnPromptReset.addEventListener('click', () => {
-            els.resetConfirmModal.classList.remove('hidden');
-        });
-
-        els.btnCancelReset.addEventListener('click', () => {
-            els.resetConfirmModal.classList.add('hidden');
-        });
-
-        els.btnExecuteReset.addEventListener('click', () => {
-            localStorage.removeItem('pkGameStateV2');
-            resetGame(true);
-            els.resetConfirmModal.classList.add('hidden');
-            els.effectLayer.style.opacity = '0';
-            els.effectLayer.style.backgroundColor = 'transparent';
-            els.effectLayer.classList.add('hidden');
-            els.effectLayer.style.pointerEvents = "none";
-            els.confettiContainer.classList.add('hidden');
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-            loadGame();
-        });
-
+            resetVisuals();
+            updateUI();
+        }
     </script>
 </body>
 </html>
